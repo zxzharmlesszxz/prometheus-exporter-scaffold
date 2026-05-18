@@ -1,0 +1,76 @@
+services:
+  exporter:
+    build:
+      context: .
+      args:
+        VERSION: ${VERSION:-dev}
+        BRANCH: ${BRANCH:-local}
+        REVISION: ${REVISION:-local}
+        BUILD_USER: ${BUILD_USER:-docker-compose}
+        BUILD_DATE: ${BUILD_DATE:-unknown}
+        PROJECT_NAME: ${PROJECT_NAME:-${COMPOSE_PROJECT_NAME:-exporter}}
+    command:
+      - --__FEATURE_NAME__.refresh-interval=30s
+    ports:
+      - "__DEFAULT_PORT__:__DEFAULT_PORT__"
+
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    ports:
+      - "9090:9090"
+    depends_on:
+      exporter:
+        condition: service_started
+    volumes:
+      - ./examples/prometheus/:/etc/prometheus/:ro
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    configs:
+      - source: grafana_prometheus_datasource
+        target: /etc/grafana/provisioning/datasources/prometheus.yml
+      - source: grafana_dashboards_provider
+        target: /etc/grafana/provisioning/dashboards/dashboards.yml
+    volumes:
+      - ./examples/grafana/:/var/lib/grafana/dashboards/:ro
+    depends_on:
+      prometheus:
+        condition: service_started
+
+configs:
+  grafana_prometheus_datasource:
+    content: |
+      apiVersion: 1
+
+      datasources:
+        - name: Prometheus
+          uid: DS_PROMETHEUS
+          type: prometheus
+          access: proxy
+          url: http://prometheus:9090
+          isDefault: true
+          editable: false
+  grafana_dashboards_provider:
+    content: |
+      apiVersion: 1
+
+      providers:
+        - name: __PROJECT_DESC__
+          orgId: 1
+          folder: Exporters
+          type: file
+          disableDeletion: true
+          editable: false
+          updateIntervalSeconds: 30
+          options:
+            path: /var/lib/grafana/dashboards
