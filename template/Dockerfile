@@ -11,7 +11,7 @@ ARG BUILD_USER=docker
 ARG BUILD_DATE=unknown
 ARG PROJECT_NAME
 
-COPY go.mod ./
+COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .

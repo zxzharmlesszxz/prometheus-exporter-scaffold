@@ -25,6 +25,10 @@ func NewFeature() *Feature {
 	}
 }
 
+func Main() {
+	template.MainFromProject(NewFeature())
+}
+
 func (f *Feature) FeatureName() string {
 	return "__FEATURE_NAME__"
 }
@@ -44,24 +48,16 @@ func (f *Feature) RegisterCollectors(ctx template.FeatureContext, registry *prom
 		ctx.Namespace,
 		ctx.Logger,
 		SnapshotGatherer{},
-		normalizeDuration(f.refreshInterval, defaultRefreshInterval),
+		template.NormalizeDuration(f.refreshInterval, defaultRefreshInterval),
 	)
-	if err := template.RegisterCollectors(registry, collector); err != nil {
+	if err := template.RegisterAndStartCollectors(context.Background(), registry, collector); err != nil {
 		return fmt.Errorf("register __FEATURE_NAME__ collector: %w", err)
 	}
-	collector.Start(context.Background())
 	return nil
 }
 
 func (f *Feature) RuntimeConfig() []any {
 	return []any{
-		"refresh_interval", normalizeDuration(f.refreshInterval, defaultRefreshInterval),
+		"refresh_interval", template.NormalizeDuration(f.refreshInterval, defaultRefreshInterval),
 	}
-}
-
-func normalizeDuration(value time.Duration, fallback time.Duration) time.Duration {
-	if value <= 0 {
-		return fallback
-	}
-	return value
 }

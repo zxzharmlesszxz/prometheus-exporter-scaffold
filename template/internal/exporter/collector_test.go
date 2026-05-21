@@ -10,7 +10,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/zxzharmlesszxz/prometheus-template-exporter/exporter/exportertest"
 )
 
 type fakeSnapshotter struct {
@@ -35,12 +37,11 @@ func TestCollectorExportsSnapshot(t *testing.T) {
 	t.Parallel()
 
 	now := time.Unix(1700000000, 0)
-	collector := NewCollector("__METRIC_NAMESPACE__", slog.New(slog.NewTextHandler(io.Discard, nil)), newFakeSnapshotter(Snapshot{
+	collector := newCollectorWithNow("__METRIC_NAMESPACE__", slog.New(slog.NewTextHandler(io.Discard, nil)), newFakeSnapshotter(Snapshot{
 		AttemptTime: now,
 		Success:     true,
 		Value:       42,
-	}), time.Minute)
-	collector.now = func() time.Time { return now }
+	}), time.Minute, func() time.Time { return now })
 
 	expected := `
 # HELP __FEATURE_NAME___example_value Example __FEATURE_NAME__ metric emitted by the generated exporter skeleton
@@ -67,34 +68,6 @@ __METRIC_NAMESPACE___last_successful_collection_timestamp_seconds 1.7e+09
 	}
 }
 
-func TestCollectorCachesSnapshotUntilRefreshInterval(t *testing.T) {
-	t.Parallel()
-
-	start := time.Unix(1700000000, 0)
-	now := start
-	snapshotter := newFakeSnapshotter(Snapshot{AttemptTime: start, Success: true, Value: 1})
-	collector := NewCollector("__METRIC_NAMESPACE__", slog.New(slog.NewTextHandler(io.Discard, nil)), snapshotter, time.Hour)
-	collector.now = func() time.Time { return now }
-
-	snapshot, _ := collector.currentSnapshot(now)
-	if snapshot.Value != 1 {
-		t.Fatalf("initial snapshot value = %v, want 1", snapshot.Value)
-	}
-
-	snapshotter.set(Snapshot{AttemptTime: start.Add(30 * time.Minute), Success: true, Value: 2})
-	now = start.Add(30 * time.Minute)
-	snapshot, _ = collector.currentSnapshot(now)
-	if snapshot.Value != 1 {
-		t.Fatalf("cached snapshot value = %v, want 1", snapshot.Value)
-	}
-
-	now = start.Add(2 * time.Hour)
-	snapshot, _ = collector.currentSnapshot(now)
-	if snapshot.Value != 2 {
-		t.Fatalf("refreshed snapshot value = %v, want 2", snapshot.Value)
-	}
-}
-
 func TestCollectorBackgroundRefreshUpdatesSnapshotOutsideScrape(t *testing.T) {
 	t.Parallel()
 
@@ -106,10 +79,12 @@ func TestCollectorBackgroundRefreshUpdatesSnapshotOutsideScrape(t *testing.T) {
 	defer cancel()
 	collector.Start(ctx)
 
-	waitForSnapshotValue(t, collector, 1)
+	registry := prometheus.NewRegistry()
+	exportertest.Register(t, registry, collector)
+	exportertest.WaitForMetricValue(t, registry, "__FEATURE_NAME___example_value", nil, 1)
 
 	snapshotter.set(Snapshot{AttemptTime: start.Add(time.Minute), Success: false, Err: errors.New("refresh failed")})
-	waitForSnapshotSuccess(t, collector, false)
+	exportertest.WaitForMetricValue(t, registry, "__METRIC_NAMESPACE___last_collection_success", nil, 0)
 }
 
 func TestCollectorDefaultsAndFailureMetrics(t *testing.T) {
@@ -140,32 +115,4 @@ __METRIC_NAMESPACE___last_successful_collection_timestamp_seconds 0
 	); err != nil {
 		t.Fatalf("CollectAndCompare() error = %v", err)
 	}
-}
-
-func waitForSnapshotValue(t *testing.T, collector *Collector, want float64) {
-	t.Helper()
-
-	deadline := time.Now().Add(time.Second)
-	for time.Now().Before(deadline) {
-		snapshot, _ := collector.currentSnapshot(time.Now())
-		if snapshot.Value == want {
-			return
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-	t.Fatalf("snapshot value did not become %v", want)
-}
-
-func waitForSnapshotSuccess(t *testing.T, collector *Collector, want bool) {
-	t.Helper()
-
-	deadline := time.Now().Add(time.Second)
-	for time.Now().Before(deadline) {
-		snapshot, _ := collector.currentSnapshot(time.Now())
-		if snapshot.Success == want {
-			return
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-	t.Fatalf("snapshot success did not become %v", want)
 }

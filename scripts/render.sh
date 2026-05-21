@@ -142,5 +142,5 @@ Rendered $project_name into $target_dir
 Next:
   cd "$target_dir"
   go mod tidy
-  go test ./...
+  make go-check
 EOF

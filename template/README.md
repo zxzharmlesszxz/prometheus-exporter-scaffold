@@ -23,7 +23,7 @@ Useful flags:
 ```
 
 By default, the exporter listens on `:__DEFAULT_PORT__` and refreshes data every `1m`.
-Data refresh runs in a background worker; scrapes return the last collected snapshot.
+Data refresh runs through the template snapshot collector in a background worker; scrapes return the last collected snapshot.
 
 ## Metrics
 
@@ -70,7 +70,7 @@ docker build \
 ## Tests
 
 ```bash
-go test ./...
+make go-check
 ```
 
 The repository includes the same maintenance target layout used by the concrete exporter repos:

@@ -16,18 +16,16 @@ permissions:
 jobs:
   render-check:
     name: Render Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    container:
+      image: golang:1.26.3-alpine
 
     steps:
+      - name: Prepare Alpine
+        run: apk add --no-cache bash git make
+
       - name: Checkout
         uses: actions/checkout@v6
-
-      - name: Set up Go
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: template/go.mod
-          cache: true
-          cache-dependency-path: template/go.sum
 
       - name: Check render script syntax
         run: bash -n scripts/render.sh

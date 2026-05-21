@@ -2,49 +2,102 @@
 
 This repository is `__PROJECT_NAME__`.
 
-It was created from:
+It was rendered from `prometheus-exporter-scaffold` and uses the framework:
 
-`prometheus-exporter-git-template`
+```go
+github.com/zxzharmlesszxz/prometheus-template-exporter v0.1.3
+```
+
+Local Go tooling in the original workspace is expected at:
+
+```bash
+PATH=/Users/mort/sdk/go1.26.3/bin:$PATH
+```
 
 ## Template Exporter Context
 
 `prometheus-template-exporter` provides the reusable exporter shell:
 
-- CLI bootstrap through `exporter.MainForProject(...)`
+- CLI bootstrap through `template.MainFromProject`
+- dynamic executable-name usage in `--help`
 - standard Prometheus/exporter-toolkit flags
 - `promslog` logging
 - `/metrics`, `/healthz`, landing page, optional pprof
 - custom Prometheus registry
 - build info, Go runtime, and process collectors
+- typed snapshot cache and background refresh collector helper
+- `exporter/exportertest` helpers for collector tests
+- `exporter/exportertest/smoketest` for binary smoke tests
 - version metadata hydration from linker flags or Go build info
-
-The template module is consumed from its published module path:
-
-```go
-github.com/zxzharmlesszxz/prometheus-template-exporter v0.1.2
-```
 
 ## Current Exporter State
 
 Entrypoint:
 
-`cmd/main.go`
+```text
+cmd/main.go
+```
+
+Generated entrypoint:
 
 ```go
-template.MainForProject(
-	"__PROJECT_NAME__",
-	"__PROJECT_DESC__",
-	exporter.NewFeature(),
-)
+package main
+
+import "__GO_MODULE__/internal/exporter"
+
+func main() {
+	exporter.Main()
+}
+```
+
+`internal/exporter.Main()` calls:
+
+```go
+template.MainFromProject(NewFeature())
+```
+
+Feature name:
+
+```text
+__FEATURE_NAME__
+```
+
+Metric namespace:
+
+```text
+__METRIC_NAMESPACE__
 ```
 
 Default listen address:
 
-`:__DEFAULT_PORT__`
+```text
+:__DEFAULT_PORT__
+```
 
 Default refresh interval:
 
-`1m`
+```text
+1m
+```
+
+## Generated Domain Skeleton
+
+- `internal/exporter/feature.go`
+  - feature implementation
+  - flag registration
+  - runtime config
+  - collector registration
+- `internal/exporter/collector.go`
+  - snapshot-backed placeholder collector
+  - example metric descriptor
+  - common collection status metrics through the framework
+- `internal/exporter/*_test.go`
+  - collector and feature tests
+- `smoke/binary_test.go`
+  - short `smoketest.Config`-based binary smoke test
+
+When turning this into a real exporter, replace placeholder domain logic and
+examples while keeping the stable framework wiring.
 
 ## Verification Targets
 
@@ -55,3 +108,54 @@ make check
 make docker-smoke
 make full-check
 ```
+
+`make go-check` runs formatting, vet, staticcheck, coverage threshold, binary
+smoke, and race tests.
+
+`make check` also validates Prometheus and Docker Compose examples.
+
+`make full-check` adds Docker smoke and release smoke.
+
+## Docker Notes
+
+The runtime image copies the built project binary to:
+
+```text
+/usr/local/bin/exporter
+```
+
+So Docker `--help` shows:
+
+```text
+usage: exporter [<flags>]
+```
+
+even though local/release binaries use the project executable file name.
+
+## Known Pending Work From Scaffold
+
+- If `prometheus-template-exporter v0.1.3` is not published yet, add a temporary
+  local replace before running Go checks:
+
+  ```go
+  replace github.com/zxzharmlesszxz/prometheus-template-exporter => ../prometheus-template-exporter
+  ```
+
+- Remove temporary local replaces after the framework tag is published.
+- Decide whether Dockerfile should move from `golang:1.26` +
+  `debian:bookworm-slim` to Alpine images.
+
+## Latest Verification
+
+On 2026-05-21 the generated `Makefile` Docker build command was checked with:
+
+```bash
+make -n docker-build
+```
+
+The previous line-continuation issue in Docker targets is fixed.
+
+## Maintenance Rule
+
+Keep this file updated whenever flags, metric namespace, domain packages,
+framework version, Docker behavior, or verification state changes.

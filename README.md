@@ -7,6 +7,8 @@ This repository owns generated-repository shape:
 
 - project layout
 - placeholder exporter feature
+- typed snapshot collector wiring
+- shared exporter test helper usage
 - example Prometheus, Grafana, and Docker Compose files
 - GitHub Actions and GitLab CI starter workflows
 - rendering script
@@ -40,6 +42,10 @@ make check
 `--feature-name`, `--namespace`, `--description`, `--module`, and `--port`
 have defaults, but passing them explicitly keeps the generated repository
 predictable.
+
+The generated `cmd/main.go` is intentionally stable. Project metadata is derived
+by `prometheus-template-exporter` from the Go module path, while the concrete
+feature package owns `exporter.Main()`.
 
 ## Framework Version
 
