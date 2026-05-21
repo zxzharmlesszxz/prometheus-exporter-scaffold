@@ -5,7 +5,7 @@ This repository is `__PROJECT_NAME__`.
 It was rendered from `prometheus-exporter-scaffold` and uses the framework:
 
 ```go
-github.com/zxzharmlesszxz/prometheus-exporter-framework v0.1.3
+github.com/zxzharmlesszxz/prometheus-exporter-framework v0.1.4
 ```
 
 Local Go tooling in the original workspace is expected at:
