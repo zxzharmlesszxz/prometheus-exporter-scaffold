@@ -122,14 +122,32 @@ export FEATURE_NAME="$feature_name"
 export METRIC_NAMESPACE="$metric_namespace"
 export DEFAULT_PORT="$default_port"
 
-find "$target_dir" -type f -print0 | xargs -0 perl -0pi -e '
-  s/__PROJECT_NAME__/$ENV{PROJECT_NAME}/g;
-  s/__GO_MODULE__/$ENV{GO_MODULE}/g;
-  s/__PROJECT_DESC__/$ENV{PROJECT_DESC}/g;
-  s/__FEATURE_NAME__/$ENV{FEATURE_NAME}/g;
-  s/__METRIC_NAMESPACE__/$ENV{METRIC_NAMESPACE}/g;
-  s/__DEFAULT_PORT__/$ENV{DEFAULT_PORT}/g;
-'
+sed_replacement() {
+  local value="$1"
+  value="${value//\\/\\\\}"
+  value="${value//&/\\&}"
+  value="${value//|/\\|}"
+  printf '%s' "$value"
+}
+
+project_name_sed="$(sed_replacement "$PROJECT_NAME")"
+go_module_sed="$(sed_replacement "$GO_MODULE")"
+project_desc_sed="$(sed_replacement "$PROJECT_DESC")"
+feature_name_sed="$(sed_replacement "$FEATURE_NAME")"
+metric_namespace_sed="$(sed_replacement "$METRIC_NAMESPACE")"
+default_port_sed="$(sed_replacement "$DEFAULT_PORT")"
+
+find "$target_dir" -type f -print0 | while IFS= read -r -d '' file; do
+  sed -i.bak \
+    -e "s|__PROJECT_NAME__|$project_name_sed|g" \
+    -e "s|__GO_MODULE__|$go_module_sed|g" \
+    -e "s|__PROJECT_DESC__|$project_desc_sed|g" \
+    -e "s|__FEATURE_NAME__|$feature_name_sed|g" \
+    -e "s|__METRIC_NAMESPACE__|$metric_namespace_sed|g" \
+    -e "s|__DEFAULT_PORT__|$default_port_sed|g" \
+    "$file"
+  rm -f "$file.bak"
+done
 
 find "$target_dir" -depth -name '*__PROJECT_NAME__*' -print | while IFS= read -r path; do
   new_path="${path//__PROJECT_NAME__/$project_name}"
