@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Prepare Alpine
-        run: apk add --no-cache bash git make
+        run: apk add --no-cache bash build-base ca-certificates git make
 
       - name: Checkout
         uses: actions/checkout@v6
