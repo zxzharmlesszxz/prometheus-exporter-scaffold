@@ -5,7 +5,7 @@ This repository is `__PROJECT_NAME__`.
 It was rendered from `prometheus-exporter-scaffold` and uses the framework:
 
 ```go
-github.com/zxzharmlesszxz/prometheus-template-exporter v0.1.3
+github.com/zxzharmlesszxz/prometheus-template-exporter v0.1.2
 ```
 
 Local Go tooling in the original workspace is expected at:
@@ -134,7 +134,7 @@ even though local/release binaries use the project executable file name.
 
 ## Known Pending Work From Scaffold
 
-- If `prometheus-template-exporter v0.1.3` is not published yet, add a temporary
+- If `prometheus-template-exporter v0.1.2` is not published yet, add a temporary
   local replace before running Go checks:
 
   ```go
