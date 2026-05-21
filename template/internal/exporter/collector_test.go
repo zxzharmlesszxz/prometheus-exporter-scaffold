@@ -116,3 +116,18 @@ __METRIC_NAMESPACE___last_successful_collection_timestamp_seconds 0
 		t.Fatalf("CollectAndCompare() error = %v", err)
 	}
 }
+
+func TestCollectorUsesDefaultSnapshotter(t *testing.T) {
+	t.Parallel()
+
+	now := time.Unix(1700000000, 0)
+	collector := newCollectorWithNow("__METRIC_NAMESPACE__", slog.New(slog.NewTextHandler(io.Discard, nil)), nil, time.Minute, func() time.Time {
+		return now
+	})
+
+	families := exportertest.RegisterAndGather(t, collector)
+	exportertest.AssertMetricValue(t, families, "__FEATURE_NAME___example_value", nil, 1)
+	exportertest.AssertMetricValue(t, families, "__METRIC_NAMESPACE___last_collection_success", nil, 1)
+	exportertest.AssertMetricValue(t, families, "__METRIC_NAMESPACE___last_collection_timestamp_seconds", nil, float64(now.Unix()))
+	exportertest.AssertMetricValue(t, families, "__METRIC_NAMESPACE___last_successful_collection_timestamp_seconds", nil, float64(now.Unix()))
+}

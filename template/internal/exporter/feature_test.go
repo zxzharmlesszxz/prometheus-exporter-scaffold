@@ -40,6 +40,18 @@ func TestFeatureRegistersCollector(t *testing.T) {
 	exportertest.WaitForMetricValue(t, registry, "__METRIC_NAMESPACE___last_collection_success", nil, 1)
 }
 
+func TestFeatureReportsCollectorRegistrationError(t *testing.T) {
+	t.Parallel()
+
+	registry := prometheus.NewRegistry()
+	exportertest.Register(t, registry, NewCollector("__METRIC_NAMESPACE__", testFeatureContext().Logger, SnapshotGatherer{}, time.Minute))
+
+	feature := NewFeature()
+	if err := feature.RegisterCollectors(testFeatureContext(), registry); err == nil {
+		t.Fatal("RegisterCollectors() error = nil, want duplicate registration error")
+	}
+}
+
 func TestFeatureRuntimeConfigNormalizesValues(t *testing.T) {
 	t.Parallel()
 
