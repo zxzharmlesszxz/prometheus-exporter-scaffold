@@ -87,6 +87,8 @@ Default refresh interval:
   - flag registration
   - runtime config
   - collector registration
+- `internal/exporter/metrics.go`
+  - rendered feature name, metric namespace, and standard metric-name constants
 - `internal/exporter/collector.go`
   - snapshot-backed placeholder collector
   - example metric descriptor
@@ -134,7 +136,7 @@ even though local/release binaries use the project executable file name.
 
 ## Known Pending Work From Scaffold
 
-- If `prometheus-exporter-framework v0.1.3` is not published yet, add a temporary
+- If `prometheus-exporter-framework v0.1.4` is not published yet, add a temporary
   local replace before running Go checks:
 
   ```go

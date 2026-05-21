@@ -38,7 +38,7 @@ func NewCollector(namespace string, logger *slog.Logger, snapshotter framework.S
 
 func newCollectorWithNow(namespace string, logger *slog.Logger, snapshotter framework.Snapshotter[Snapshot], refreshInterval time.Duration, now func() time.Time) *Collector {
 	if namespace == "" {
-		namespace = "__METRIC_NAMESPACE__"
+		namespace = defaultMetricNamespace
 	}
 	if logger == nil {
 		logger = slog.Default()
@@ -52,8 +52,8 @@ func newCollectorWithNow(namespace string, logger *slog.Logger, snapshotter fram
 
 	collector := &Collector{
 		exampleValueDesc: prometheus.NewDesc(
-			"__FEATURE_NAME___example_value",
-			"Example __FEATURE_NAME__ metric emitted by the generated exporter skeleton",
+			metricExampleValue,
+			"Example "+defaultFeatureName+" metric emitted by the generated exporter skeleton",
 			nil,
 			nil,
 		),
@@ -69,9 +69,9 @@ func newCollectorWithNow(namespace string, logger *slog.Logger, snapshotter fram
 		ErrorLogFunc:    logSnapshotError,
 		Now:             now,
 
-		LastCollectionSuccessHelp:    "Whether the last __FEATURE_NAME__ data collection succeeded",
-		LastCollectionTimestampHelp:  "Unix timestamp of the last __FEATURE_NAME__ data collection attempt",
-		LastSuccessfulCollectionHelp: "Unix timestamp of the last successful __FEATURE_NAME__ data collection",
+		LastCollectionSuccessHelp:    "Whether the last " + defaultFeatureName + " data collection succeeded",
+		LastCollectionTimestampHelp:  "Unix timestamp of the last " + defaultFeatureName + " data collection attempt",
+		LastSuccessfulCollectionHelp: "Unix timestamp of the last successful " + defaultFeatureName + " data collection",
 	})
 	return collector
 }
@@ -100,6 +100,6 @@ func snapshotStatus(snapshot Snapshot) framework.SnapshotStatus {
 
 func logSnapshotError(logger *slog.Logger, snapshot Snapshot) {
 	if snapshot.Err != nil {
-		logger.Error("__FEATURE_NAME__ data collection failed", "err", snapshot.Err)
+		logger.Error(defaultFeatureName+" data collection failed", "err", snapshot.Err)
 	}
 }

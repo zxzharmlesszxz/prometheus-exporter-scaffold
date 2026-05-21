@@ -20,7 +20,7 @@ func TestFeatureRegistersAndParsesFlags(t *testing.T) {
 	app.Terminate(func(int) {})
 	feature.RegisterFlags(app)
 
-	if _, err := app.Parse([]string{"--__FEATURE_NAME__.refresh-interval=30s"}); err != nil {
+	if _, err := app.Parse([]string{"--" + defaultFeatureName + ".refresh-interval=30s"}); err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
 	if feature.refreshInterval != 30*time.Second {
@@ -37,14 +37,14 @@ func TestFeatureRegistersCollector(t *testing.T) {
 		t.Fatalf("RegisterCollectors() error = %v", err)
 	}
 
-	exportertest.WaitForMetricValue(t, registry, "__METRIC_NAMESPACE___last_collection_success", nil, 1)
+	exportertest.WaitForMetricValue(t, registry, metricLastCollectionSuccess, nil, 1)
 }
 
 func TestFeatureReportsCollectorRegistrationError(t *testing.T) {
 	t.Parallel()
 
 	registry := prometheus.NewRegistry()
-	exportertest.Register(t, registry, NewCollector("__METRIC_NAMESPACE__", testFeatureContext().Logger, SnapshotGatherer{}, time.Minute))
+	exportertest.Register(t, registry, NewCollector(defaultMetricNamespace, testFeatureContext().Logger, SnapshotGatherer{}, time.Minute))
 
 	feature := NewFeature()
 	if err := feature.RegisterCollectors(testFeatureContext(), registry); err == nil {
@@ -66,8 +66,8 @@ func TestFeatureMetadata(t *testing.T) {
 	t.Parallel()
 
 	feature := NewFeature()
-	if feature.FeatureName() != "__FEATURE_NAME__" {
-		t.Fatalf("FeatureName() = %q, want %q", feature.FeatureName(), "__FEATURE_NAME__")
+	if feature.FeatureName() != defaultFeatureName {
+		t.Fatalf("FeatureName() = %q, want %q", feature.FeatureName(), defaultFeatureName)
 	}
 	if feature.DefaultListenAddress() != defaultListenAddress {
 		t.Fatalf("DefaultListenAddress() = %q, want %q", feature.DefaultListenAddress(), defaultListenAddress)
@@ -78,6 +78,6 @@ func testFeatureContext() framework.FeatureContext {
 	return framework.FeatureContext{
 		Logger:       slog.New(slog.NewTextHandler(io.Discard, nil)),
 		ExporterName: "__PROJECT_NAME__",
-		Namespace:    "__METRIC_NAMESPACE__",
+		Namespace:    defaultMetricNamespace,
 	}
 }

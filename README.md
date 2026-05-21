@@ -57,3 +57,27 @@ pull request here to update the scaffold and verify a rendered exporter.
 
 This repository's own CI also renders a demo exporter and runs its Go-only
 checks, so scaffold pull requests validate the generated code path directly.
+
+## Update An Existing Exporter
+
+Existing exporters are not coupled to this repository after rendering. To check
+or sync scaffold-owned files against the current template, run:
+
+```bash
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter
+```
+
+To update the default managed files:
+
+```bash
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --sync
+```
+
+The default managed set is intentionally conservative: CI files, ignore files,
+and `cmd/main.go`. Concrete exporters often customize `Makefile` Docker smoke
+commands, Dockerfiles, and examples, so inspect those separately:
+
+```bash
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file Makefile
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file Dockerfile
+```

@@ -30,7 +30,7 @@ func Main() {
 }
 
 func (f *Feature) FeatureName() string {
-	return "__FEATURE_NAME__"
+	return defaultFeatureName
 }
 
 func (f *Feature) DefaultListenAddress() string {
@@ -39,7 +39,7 @@ func (f *Feature) DefaultListenAddress() string {
 
 func (f *Feature) RegisterFlags(app *kingpin.Application) {
 	app.Flag(
-		"__FEATURE_NAME__.refresh-interval", "How often exporter refreshes __FEATURE_NAME__ data",
+		defaultFeatureName+".refresh-interval", "How often exporter refreshes "+defaultFeatureName+" data",
 	).Default(defaultRefreshInterval.String()).DurationVar(&f.refreshInterval)
 }
 
@@ -51,7 +51,7 @@ func (f *Feature) RegisterCollectors(ctx framework.FeatureContext, registry *pro
 		framework.NormalizeDuration(f.refreshInterval, defaultRefreshInterval),
 	)
 	if err := framework.RegisterAndStartCollectors(context.Background(), registry, collector); err != nil {
-		return fmt.Errorf("register __FEATURE_NAME__ collector: %w", err)
+		return fmt.Errorf("register %s collector: %w", defaultFeatureName, err)
 	}
 	return nil
 }

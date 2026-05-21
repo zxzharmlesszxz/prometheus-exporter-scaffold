@@ -6,23 +6,32 @@ import (
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/exportertest/smoketest"
 )
 
+const (
+	projectName            = "__PROJECT_NAME__"
+	featureName            = "__FEATURE_NAME__"
+	metricNamespace        = "__METRIC_NAMESPACE__"
+	metricBuildInfo        = metricNamespace + "_build_info"
+	metricExampleValue     = featureName + "_example_value"
+	metricCollectionStatus = metricNamespace + "_last_collection_success"
+)
+
 func TestBinarySmoke(t *testing.T) {
 	smoketest.RunBinary(t, smoketest.Config{
-		ProjectName:         "__PROJECT_NAME__",
-		BuildInfoMetric:     "__METRIC_NAMESPACE___build_info",
-		ForbiddenUsageNames: []string{"__METRIC_NAMESPACE__"},
-		RenamedExecutable:   "renamed-__FEATURE_NAME__-exporter",
+		ProjectName:         projectName,
+		BuildInfoMetric:     metricBuildInfo,
+		ForbiddenUsageNames: []string{metricNamespace},
+		RenamedExecutable:   "renamed-" + featureName + "-exporter",
 		ServerArgs: func(_ *testing.T, _ string) []string {
 			return []string{
-				"--__FEATURE_NAME__.refresh-interval=100ms",
+				"--" + featureName + ".refresh-interval=100ms",
 			}
 		},
 		WantMetrics: []string{
-			"__METRIC_NAMESPACE___last_collection_success 1",
-			"__FEATURE_NAME___example_value 1",
+			metricCollectionStatus + " 1",
+			metricExampleValue + " 1",
 		},
 		RejectMetrics: []string{
-			"__METRIC_NAMESPACE___last_collection_success 0",
+			metricCollectionStatus + " 0",
 		},
 	})
 }

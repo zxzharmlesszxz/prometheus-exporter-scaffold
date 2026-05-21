@@ -27,8 +27,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Check render script syntax
-        run: bash -n scripts/render.sh
+      - name: Check script syntax
+        run: |
+          bash -n scripts/render.sh
+          bash -n scripts/scaffold-drift.sh
 
       - name: Render demo exporter
         run: |
@@ -43,6 +45,13 @@ jobs:
             --namespace demo_exporter \
             --port 9888 \
             --target-dir "$tmp"
+
+      - name: Check rendered placeholders
+        run: |
+          if grep -R -n -E '__[A-Z0-9_]+__' "$RENDERED_EXPORTER"; then
+            echo "rendered exporter still contains scaffold placeholders" >&2
+            exit 1
+          fi
 
       - name: Run generated Go checks
         run: |

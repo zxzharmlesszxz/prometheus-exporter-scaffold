@@ -16,9 +16,9 @@ func TestFeatureServesMetricsThroughTemplate(t *testing.T) {
 
 	handler := newTestHandler(t)
 	body := waitForHandlerMetrics(t, handler, []string{
-		"__METRIC_NAMESPACE___build_info",
-		"__METRIC_NAMESPACE___last_collection_success 1",
-		"__FEATURE_NAME___example_value 1",
+		metricBuildInfo,
+		metricLastCollectionSuccess + " 1",
+		metricExampleValue + " 1",
 	})
 	if body == "" {
 		t.Fatal("waitForHandlerMetrics() returned empty body")
@@ -30,7 +30,7 @@ func newTestHandler(t *testing.T) http.Handler {
 
 	feature := NewFeature()
 	registry, err := framework.NewRegistry(
-		"__METRIC_NAMESPACE__",
+		defaultMetricNamespace,
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 		feature,
 	)
