@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	template "github.com/zxzharmlesszxz/prometheus-template-exporter/exporter"
+	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
 )
 
 type Snapshot struct {
@@ -27,16 +27,16 @@ func (SnapshotGatherer) Snapshot(_ context.Context, now time.Time) Snapshot {
 }
 
 type Collector struct {
-	*template.SnapshotCollector[Snapshot]
+	*framework.SnapshotCollector[Snapshot]
 
 	exampleValueDesc *prometheus.Desc
 }
 
-func NewCollector(namespace string, logger *slog.Logger, snapshotter template.Snapshotter[Snapshot], refreshInterval time.Duration) *Collector {
+func NewCollector(namespace string, logger *slog.Logger, snapshotter framework.Snapshotter[Snapshot], refreshInterval time.Duration) *Collector {
 	return newCollectorWithNow(namespace, logger, snapshotter, refreshInterval, nil)
 }
 
-func newCollectorWithNow(namespace string, logger *slog.Logger, snapshotter template.Snapshotter[Snapshot], refreshInterval time.Duration, now func() time.Time) *Collector {
+func newCollectorWithNow(namespace string, logger *slog.Logger, snapshotter framework.Snapshotter[Snapshot], refreshInterval time.Duration, now func() time.Time) *Collector {
 	if namespace == "" {
 		namespace = "__METRIC_NAMESPACE__"
 	}
@@ -58,7 +58,7 @@ func newCollectorWithNow(namespace string, logger *slog.Logger, snapshotter temp
 			nil,
 		),
 	}
-	collector.SnapshotCollector = template.NewSnapshotCollector(template.SnapshotCollectorOptions[Snapshot]{
+	collector.SnapshotCollector = framework.NewSnapshotCollector(framework.SnapshotCollectorOptions[Snapshot]{
 		Namespace:       namespace,
 		Logger:          logger,
 		Snapshotter:     snapshotter,
@@ -91,8 +91,8 @@ func (c *Collector) collectSnapshotMetrics(ch chan<- prometheus.Metric, snapshot
 	)
 }
 
-func snapshotStatus(snapshot Snapshot) template.SnapshotStatus {
-	return template.SnapshotStatus{
+func snapshotStatus(snapshot Snapshot) framework.SnapshotStatus {
+	return framework.SnapshotStatus{
 		AttemptTime: snapshot.AttemptTime,
 		Success:     snapshot.Success,
 	}

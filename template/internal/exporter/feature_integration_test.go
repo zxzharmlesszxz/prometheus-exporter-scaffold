@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	template "github.com/zxzharmlesszxz/prometheus-template-exporter/exporter"
+	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
 )
 
 func TestFeatureServesMetricsThroughTemplate(t *testing.T) {
@@ -29,7 +29,7 @@ func newTestHandler(t *testing.T) http.Handler {
 	t.Helper()
 
 	feature := NewFeature()
-	registry, err := template.NewRegistry(
+	registry, err := framework.NewRegistry(
 		"__METRIC_NAMESPACE__",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 		feature,
@@ -38,7 +38,7 @@ func newTestHandler(t *testing.T) http.Handler {
 		t.Fatalf("NewRegistry() error = %v, want nil", err)
 	}
 
-	return template.NewHandler(template.HandlerOptions{
+	return framework.NewHandler(framework.HandlerOptions{
 		Name:        "__PROJECT_NAME__",
 		Description: "__PROJECT_DESC__",
 		MetricsPath: "/metrics",

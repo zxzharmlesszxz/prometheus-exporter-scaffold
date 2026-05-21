@@ -2,7 +2,7 @@
 
 `__PROJECT_NAME__` exposes __FEATURE_NAME__ state as Prometheus metrics.
 
-It is built as a thin exporter on top of `prometheus-template-exporter`.
+It is built as a thin exporter on top of `prometheus-exporter-framework`.
 
 ## Local Run
 

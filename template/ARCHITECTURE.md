@@ -1,6 +1,6 @@
 # Architecture
 
-`__PROJECT_NAME__` is a thin concrete exporter built on `prometheus-template-exporter`.
+`__PROJECT_NAME__` is a thin concrete exporter built on `prometheus-exporter-framework`.
 
 ## Package Layout
 
@@ -13,10 +13,10 @@
 
 ## Data Flow
 
-1. `cmd/main.go` delegates to `internal/exporter.Main()`, which runs `template.MainFromProject(...)`.
+1. `cmd/main.go` delegates to `internal/exporter.Main()`, which runs `framework.MainFromProject(...)`.
 2. The feature registers `--__FEATURE_NAME__.refresh-interval`.
 3. The feature registers one collector with the template registry.
-4. `template.SnapshotCollector` refreshes data in a background worker every `--__FEATURE_NAME__.refresh-interval`; scrapes read the latest completed snapshot.
+4. `framework.SnapshotCollector` refreshes data in a background worker every `--__FEATURE_NAME__.refresh-interval`; scrapes read the latest completed snapshot.
 5. The collector exports domain metrics and collection health metrics.
 
 ## Failure Semantics

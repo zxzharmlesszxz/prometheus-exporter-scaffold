@@ -3,7 +3,7 @@ package smoke
 import (
 	"testing"
 
-	"github.com/zxzharmlesszxz/prometheus-template-exporter/exporter/exportertest/smoketest"
+	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/exportertest/smoketest"
 )
 
 func TestBinarySmoke(t *testing.T) {

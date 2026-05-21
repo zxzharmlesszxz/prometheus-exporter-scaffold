@@ -5,7 +5,7 @@ This repository is `__PROJECT_NAME__`.
 It was rendered from `prometheus-exporter-scaffold` and uses the framework:
 
 ```go
-github.com/zxzharmlesszxz/prometheus-template-exporter v0.1.2
+github.com/zxzharmlesszxz/prometheus-exporter-framework v0.1.2
 ```
 
 Local Go tooling in the original workspace is expected at:
@@ -14,11 +14,11 @@ Local Go tooling in the original workspace is expected at:
 PATH=/Users/mort/sdk/go1.26.3/bin:$PATH
 ```
 
-## Template Exporter Context
+## Framework Context
 
-`prometheus-template-exporter` provides the reusable exporter shell:
+`prometheus-exporter-framework` provides the reusable exporter shell:
 
-- CLI bootstrap through `template.MainFromProject`
+- CLI bootstrap through `framework.MainFromProject`
 - dynamic executable-name usage in `--help`
 - standard Prometheus/exporter-toolkit flags
 - `promslog` logging
@@ -53,7 +53,7 @@ func main() {
 `internal/exporter.Main()` calls:
 
 ```go
-template.MainFromProject(NewFeature())
+framework.MainFromProject(NewFeature())
 ```
 
 Feature name:
@@ -134,11 +134,11 @@ even though local/release binaries use the project executable file name.
 
 ## Known Pending Work From Scaffold
 
-- If `prometheus-template-exporter v0.1.2` is not published yet, add a temporary
+- If `prometheus-exporter-framework v0.1.2` is not published yet, add a temporary
   local replace before running Go checks:
 
   ```go
-  replace github.com/zxzharmlesszxz/prometheus-template-exporter => ../prometheus-template-exporter
+  replace github.com/zxzharmlesszxz/prometheus-exporter-framework => ../prometheus-exporter-framework
   ```
 
 - Remove temporary local replaces after the framework tag is published.

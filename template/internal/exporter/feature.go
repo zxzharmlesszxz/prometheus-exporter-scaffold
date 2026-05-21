@@ -7,7 +7,7 @@ import (
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/prometheus/client_golang/prometheus"
-	template "github.com/zxzharmlesszxz/prometheus-template-exporter/exporter"
+	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
 )
 
 const (
@@ -26,7 +26,7 @@ func NewFeature() *Feature {
 }
 
 func Main() {
-	template.MainFromProject(NewFeature())
+	framework.MainFromProject(NewFeature())
 }
 
 func (f *Feature) FeatureName() string {
@@ -43,14 +43,14 @@ func (f *Feature) RegisterFlags(app *kingpin.Application) {
 	).Default(defaultRefreshInterval.String()).DurationVar(&f.refreshInterval)
 }
 
-func (f *Feature) RegisterCollectors(ctx template.FeatureContext, registry *prometheus.Registry) error {
+func (f *Feature) RegisterCollectors(ctx framework.FeatureContext, registry *prometheus.Registry) error {
 	collector := NewCollector(
 		ctx.Namespace,
 		ctx.Logger,
 		SnapshotGatherer{},
-		template.NormalizeDuration(f.refreshInterval, defaultRefreshInterval),
+		framework.NormalizeDuration(f.refreshInterval, defaultRefreshInterval),
 	)
-	if err := template.RegisterAndStartCollectors(context.Background(), registry, collector); err != nil {
+	if err := framework.RegisterAndStartCollectors(context.Background(), registry, collector); err != nil {
 		return fmt.Errorf("register __FEATURE_NAME__ collector: %w", err)
 	}
 	return nil
@@ -58,6 +58,6 @@ func (f *Feature) RegisterCollectors(ctx template.FeatureContext, registry *prom
 
 func (f *Feature) RuntimeConfig() []any {
 	return []any{
-		"refresh_interval", template.NormalizeDuration(f.refreshInterval, defaultRefreshInterval),
+		"refresh_interval", framework.NormalizeDuration(f.refreshInterval, defaultRefreshInterval),
 	}
 }

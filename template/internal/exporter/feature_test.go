@@ -8,8 +8,8 @@ import (
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/prometheus/client_golang/prometheus"
-	template "github.com/zxzharmlesszxz/prometheus-template-exporter/exporter"
-	"github.com/zxzharmlesszxz/prometheus-template-exporter/exporter/exportertest"
+	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
+	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/exportertest"
 )
 
 func TestFeatureRegistersAndParsesFlags(t *testing.T) {
@@ -62,8 +62,8 @@ func TestFeatureMetadata(t *testing.T) {
 	}
 }
 
-func testFeatureContext() template.FeatureContext {
-	return template.FeatureContext{
+func testFeatureContext() framework.FeatureContext {
+	return framework.FeatureContext{
 		Logger:       slog.New(slog.NewTextHandler(io.Discard, nil)),
 		ExporterName: "__PROJECT_NAME__",
 		Namespace:    "__METRIC_NAMESPACE__",

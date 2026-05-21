@@ -1,7 +1,7 @@
 # prometheus-exporter-scaffold
 
 Scaffold repository for creating concrete Prometheus exporters from
-`prometheus-template-exporter`.
+`prometheus-exporter-framework`.
 
 This repository owns generated-repository shape:
 
@@ -14,7 +14,7 @@ This repository owns generated-repository shape:
 - rendering script
 
 The framework itself lives in
-`github.com/zxzharmlesszxz/prometheus-template-exporter`. Keep exporter runtime
+`github.com/zxzharmlesszxz/prometheus-exporter-framework`. Keep exporter runtime
 behavior in the framework and keep generated-project boilerplate here.
 
 ## Render A New Exporter
@@ -44,13 +44,13 @@ have defaults, but passing them explicitly keeps the generated repository
 predictable.
 
 The generated `cmd/main.go` is intentionally stable. Project metadata is derived
-by `prometheus-template-exporter` from the Go module path, while the concrete
+by `prometheus-exporter-framework` from the Go module path, while the concrete
 feature package owns `exporter.Main()`.
 
 ## Framework Version
 
 `framework.version` and `template/go.mod` track the
-`prometheus-template-exporter` version used by newly generated exporters.
+`prometheus-exporter-framework` version used by newly generated exporters.
 
 When a new framework tag is published, the framework release workflow opens a
 pull request here to update the scaffold and verify a rendered exporter.

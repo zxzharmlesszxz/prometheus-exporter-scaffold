@@ -12,7 +12,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
-	"github.com/zxzharmlesszxz/prometheus-template-exporter/exporter/exportertest"
+	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/exportertest"
 )
 
 type fakeSnapshotter struct {
