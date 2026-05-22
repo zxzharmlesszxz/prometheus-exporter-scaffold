@@ -63,6 +63,10 @@ inspect split feature method drift with --file internal/exporter/feature_flags.g
 --file internal/exporter/runtime_config.go.
 Collector test helpers can be inspected with
 --file internal/exporter/collector_test_helpers_test.go.
+Collector tests can be inspected by concern with
+--file internal/exporter/collector_snapshot_test.go,
+--file internal/exporter/collector_refresh_test.go, or
+--file internal/exporter/collector_defaults_test.go.
 Feature test helpers can be inspected with
 --file internal/exporter/feature_test_helpers_test.go and
 --file internal/exporter/feature_integration_test_helpers_test.go.
@@ -439,6 +443,36 @@ legacy_managed_go_reason() {
         fi
         if grep -Eq '^[[:space:]]*func[[:space:]]*\([^)]*\)[[:space:]]+set[[:space:]]*\(' "$collector_test_file"; then
           reasons+=("fakeSnapshotter.set()")
+        fi
+      fi
+      if [[ "${#reasons[@]}" -gt 0 ]]; then
+        echo "${reasons[*]} still defined in internal/exporter/collector_test.go"
+        return 0
+      fi
+      ;;
+    internal/exporter/collector_snapshot_test.go)
+      local collector_test_file="$target_dir/internal/exporter/collector_test.go"
+      if [[ -f "$collector_test_file" ]] && grep -Eq '^[[:space:]]*func[[:space:]]+TestCollectorExportsSnapshot[[:space:]]*\(' "$collector_test_file"; then
+        echo "TestCollectorExportsSnapshot() still defined in internal/exporter/collector_test.go"
+        return 0
+      fi
+      ;;
+    internal/exporter/collector_refresh_test.go)
+      local collector_test_file="$target_dir/internal/exporter/collector_test.go"
+      if [[ -f "$collector_test_file" ]] && grep -Eq '^[[:space:]]*func[[:space:]]+TestCollectorBackgroundRefresh[^[:space:]]*[[:space:]]*\(' "$collector_test_file"; then
+        echo "TestCollectorBackgroundRefresh*() still defined in internal/exporter/collector_test.go"
+        return 0
+      fi
+      ;;
+    internal/exporter/collector_defaults_test.go)
+      local reasons=()
+      local collector_test_file="$target_dir/internal/exporter/collector_test.go"
+      if [[ -f "$collector_test_file" ]]; then
+        if grep -Eq '^[[:space:]]*func[[:space:]]+TestCollectorDefaults[^[:space:]]*[[:space:]]*\(' "$collector_test_file"; then
+          reasons+=("TestCollectorDefaults*()")
+        fi
+        if grep -Eq '^[[:space:]]*func[[:space:]]+TestCollectorUsesDefaultSnapshotter[[:space:]]*\(' "$collector_test_file"; then
+          reasons+=("TestCollectorUsesDefaultSnapshotter()")
         fi
       fi
       if [[ "${#reasons[@]}" -gt 0 ]]; then

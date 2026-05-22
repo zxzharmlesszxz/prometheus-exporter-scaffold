@@ -113,6 +113,8 @@ Default refresh interval:
   - placeholder snapshot gathering plus snapshot status/error adapters
 - `internal/exporter/*_test.go`
   - collector and feature tests
+  - split collector tests by concern in `collector_snapshot_test.go`,
+    `collector_refresh_test.go`, and `collector_defaults_test.go`
   - split feature tests by concern in `feature_flags_test.go`,
     `feature_collectors_test.go`, `runtime_config_test.go`, and
     `identity_test.go`
