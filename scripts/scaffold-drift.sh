@@ -55,6 +55,10 @@ Collector types are domain-specific; inspect split collector type drift with
 --file internal/exporter/collector_types.go before migrating manually.
 Snapshot gatherers and snapshot status/error adapters are also domain-specific;
 inspect them with --file internal/exporter/snapshot.go.
+Feature flags, collector registration, and runtime config are domain-specific;
+inspect split feature method drift with --file internal/exporter/feature_flags.go,
+--file internal/exporter/feature_collectors.go, or
+--file internal/exporter/runtime_config.go.
 USAGE
 }
 
@@ -352,6 +356,24 @@ legacy_managed_go_reason() {
       fi
       if [[ "${#reasons[@]}" -gt 0 ]]; then
         echo "${reasons[*]} still defined outside internal/exporter/standard_metrics.go"
+        return 0
+      fi
+      ;;
+    internal/exporter/feature_flags.go)
+      if feature_go_defines '^[[:space:]]*func[[:space:]]*\([^)]*\)[[:space:]]+RegisterFlags[[:space:]]*\('; then
+        echo "RegisterFlags() still defined in internal/exporter/feature.go"
+        return 0
+      fi
+      ;;
+    internal/exporter/feature_collectors.go)
+      if feature_go_defines '^[[:space:]]*func[[:space:]]*\([^)]*\)[[:space:]]+RegisterCollectors[[:space:]]*\('; then
+        echo "RegisterCollectors() still defined in internal/exporter/feature.go"
+        return 0
+      fi
+      ;;
+    internal/exporter/runtime_config.go)
+      if feature_go_defines '^[[:space:]]*func[[:space:]]*\([^)]*\)[[:space:]]+RuntimeConfig[[:space:]]*\('; then
+        echo "RuntimeConfig() still defined in internal/exporter/feature.go"
         return 0
       fi
       ;;

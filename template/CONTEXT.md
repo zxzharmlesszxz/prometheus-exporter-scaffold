@@ -83,10 +83,13 @@ Default refresh interval:
 ## Generated Domain Skeleton
 
 - `internal/exporter/feature.go`
-  - feature implementation
-  - flag registration
-  - runtime config
-  - collector registration
+  - feature defaults, state, and constructor
+- `internal/exporter/feature_flags.go`
+  - feature flag registration
+- `internal/exporter/feature_collectors.go`
+  - feature collector registration
+- `internal/exporter/runtime_config.go`
+  - feature runtime config reporting
 - `internal/exporter/main.go`
   - stable `Main()` framework bootstrap
 - `internal/exporter/identity.go`

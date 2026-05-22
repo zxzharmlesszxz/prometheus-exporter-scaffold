@@ -82,6 +82,9 @@ Dockerfiles, domain metric constants, and examples, so inspect those separately:
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file Makefile
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file Dockerfile
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/metrics.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/feature_flags.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/feature_collectors.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/runtime_config.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/collector_types.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/snapshot.go
 ```
@@ -93,3 +96,5 @@ once when adopting the split scaffold Go files; the drift script will report
 `LEGACY` instead of syncing duplicate definitions. It reports the same guard for
 standard metric constants that still live in `metrics.go`, and for collector
 types and snapshot helpers that still live in `internal/exporter/collector.go`.
+Domain feature methods get the same guard while they still live in
+`internal/exporter/feature.go`.
