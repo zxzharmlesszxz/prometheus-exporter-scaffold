@@ -25,7 +25,7 @@ Render metadata overrides:
   --description TEXT     Defaults to the first README.md H1 or project name.
   --feature-name NAME    Defaults to defaultFeatureName or FeatureName() under internal/exporter.
   --namespace NAME       Defaults to Namespace: from tests or derived from module.
-  --port PORT            Defaults to defaultListenAddress from feature.go or 9888.
+  --port PORT            Defaults to defaultListenAddress under internal/exporter or 9888.
 
 File selection:
   --file PATH            Compare/sync this rendered path. Can be repeated.
@@ -38,8 +38,9 @@ Default managed files:
   .gitlab-ci.yml
   cmd/main.go
   internal/exporter/identity.go
+  internal/exporter/listen.go
   internal/exporter/main.go
-  internal/exporter/metrics.go
+  internal/exporter/standard_metrics.go
 
 Makefiles often contain domain-specific smoke-test commands in concrete
 exporters. Inspect them with --file Makefile and port relevant hunks manually.
@@ -47,6 +48,9 @@ Dockerfiles can also be domain-specific when exporters need runtime packages.
 Legacy exporters may still define Main(), FeatureName(), or
 DefaultListenAddress() in internal/exporter/feature.go. Remove those definitions
 once when adopting the split scaffold Go files.
+Metric constants are split so scaffold-owned standard names live in
+internal/exporter/standard_metrics.go. Domain-specific metric constants should
+remain in internal/exporter/metrics.go.
 Collector types are domain-specific; inspect split collector type drift with
 --file internal/exporter/collector_types.go before migrating manually.
 Snapshot gatherers and snapshot status/error adapters are also domain-specific;
@@ -73,8 +77,9 @@ default_files=(
   ".gitlab-ci.yml"
   "cmd/main.go"
   "internal/exporter/identity.go"
+  "internal/exporter/listen.go"
   "internal/exporter/main.go"
-  "internal/exporter/metrics.go"
+  "internal/exporter/standard_metrics.go"
 )
 
 while [[ $# -gt 0 ]]; do
@@ -216,17 +221,24 @@ detect_feature_name() {
 }
 
 detect_default_port() {
-  local file="$target_dir/internal/exporter/feature.go"
-  [[ -f "$file" ]] || return 0
-  awk '
-    /defaultListenAddress[[:space:]]*=/ && /":[0-9]+"/ {
-      line = $0
-      sub(/^.*:"?/, "", line)
-      sub(/".*$/, "", line)
-      print line
-      exit
-    }
-  ' "$file"
+  local dir="$target_dir/internal/exporter"
+  local file value
+  [[ -d "$dir" ]] || return 0
+  while IFS= read -r file; do
+    value="$(awk '
+      /defaultListenAddress[[:space:]]*=/ && /":[0-9]+"/ {
+        line = $0
+        sub(/^.*:"?/, "", line)
+        sub(/".*$/, "", line)
+        print line
+        exit
+      }
+    ' "$file")"
+    if [[ -n "$value" ]]; then
+      printf '%s' "$value"
+      return 0
+    fi
+  done < <(find "$dir" -type f -name '*.go' -print 2>/dev/null | sort)
 }
 
 sanitize_metric_namespace() {
@@ -273,6 +285,23 @@ feature_go_defines() {
   grep -Eq "$pattern" "$file"
 }
 
+exporter_go_defines_except() {
+  local skip_path="$target_dir/$1"
+  local pattern="$2"
+  local dir="$target_dir/internal/exporter"
+  local file
+  [[ -d "$dir" ]] || return 1
+  while IFS= read -r file; do
+    if [[ "$file" == "$skip_path" ]]; then
+      continue
+    fi
+    if grep -Eq "$pattern" "$file"; then
+      return 0
+    fi
+  done < <(find "$dir" -type f -name '*.go' -print 2>/dev/null | sort)
+  return 1
+}
+
 legacy_managed_go_reason() {
   local file="$1"
   case "$file" in
@@ -292,6 +321,37 @@ legacy_managed_go_reason() {
       fi
       if [[ "${#reasons[@]}" -gt 0 ]]; then
         echo "${reasons[*]} still defined in internal/exporter/feature.go"
+        return 0
+      fi
+      ;;
+    internal/exporter/listen.go)
+      if exporter_go_defines_except "$file" '^[[:space:]]*defaultListenAddress[[:space:]]*='; then
+        echo "defaultListenAddress still defined outside internal/exporter/listen.go"
+        return 0
+      fi
+      ;;
+    internal/exporter/standard_metrics.go)
+      local reasons=()
+      if exporter_go_defines_except "$file" '^[[:space:]]*defaultFeatureName[[:space:]]*='; then
+        reasons+=("defaultFeatureName")
+      fi
+      if exporter_go_defines_except "$file" '^[[:space:]]*defaultMetricNamespace[[:space:]]*='; then
+        reasons+=("defaultMetricNamespace")
+      fi
+      if exporter_go_defines_except "$file" '^[[:space:]]*metricBuildInfo[[:space:]]*='; then
+        reasons+=("metricBuildInfo")
+      fi
+      if exporter_go_defines_except "$file" '^[[:space:]]*metricLastCollectionSuccess[[:space:]]*='; then
+        reasons+=("metricLastCollectionSuccess")
+      fi
+      if exporter_go_defines_except "$file" '^[[:space:]]*metricLastCollectionTimestampSeconds[[:space:]]*='; then
+        reasons+=("metricLastCollectionTimestampSeconds")
+      fi
+      if exporter_go_defines_except "$file" '^[[:space:]]*metricLastSuccessfulCollectionTimestampSeconds[[:space:]]*='; then
+        reasons+=("metricLastSuccessfulCollectionTimestampSeconds")
+      fi
+      if [[ "${#reasons[@]}" -gt 0 ]]; then
+        echo "${reasons[*]} still defined outside internal/exporter/standard_metrics.go"
         return 0
       fi
       ;;

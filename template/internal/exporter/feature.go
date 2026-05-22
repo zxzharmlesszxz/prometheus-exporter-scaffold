@@ -11,7 +11,6 @@ import (
 )
 
 const (
-	defaultListenAddress   = ":__DEFAULT_PORT__"
 	defaultRefreshInterval = time.Minute
 )
 

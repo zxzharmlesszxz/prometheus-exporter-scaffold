@@ -91,8 +91,13 @@ Default refresh interval:
   - stable `Main()` framework bootstrap
 - `internal/exporter/identity.go`
   - stable `FeatureName()` and `DefaultListenAddress()` methods
+- `internal/exporter/listen.go`
+  - rendered default listen address
+- `internal/exporter/standard_metrics.go`
+  - rendered feature name, metric namespace, build-info metric, and standard
+    collection status metric constants
 - `internal/exporter/metrics.go`
-  - rendered feature name, metric namespace, and standard metric-name constants
+  - placeholder domain/example metric constants
 - `internal/exporter/collector.go`
   - snapshot-backed placeholder collector
   - example metric descriptor
