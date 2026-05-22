@@ -66,6 +66,11 @@ Collector test helpers can be inspected with
 Feature test helpers can be inspected with
 --file internal/exporter/feature_test_helpers_test.go and
 --file internal/exporter/feature_integration_test_helpers_test.go.
+Feature tests can be inspected by concern with
+--file internal/exporter/feature_flags_test.go,
+--file internal/exporter/feature_collectors_test.go,
+--file internal/exporter/runtime_config_test.go, or
+--file internal/exporter/identity_test.go.
 USAGE
 }
 
@@ -461,6 +466,43 @@ legacy_managed_go_reason() {
       fi
       if [[ "${#reasons[@]}" -gt 0 ]]; then
         echo "${reasons[*]} still defined in internal/exporter/feature_integration_test.go"
+        return 0
+      fi
+      ;;
+    internal/exporter/feature_flags_test.go)
+      local feature_test_file="$target_dir/internal/exporter/feature_test.go"
+      if [[ -f "$feature_test_file" ]] && grep -Eq '^[[:space:]]*func[[:space:]]+TestFeatureRegistersAndParsesFlags[[:space:]]*\(' "$feature_test_file"; then
+        echo "TestFeatureRegistersAndParsesFlags() still defined in internal/exporter/feature_test.go"
+        return 0
+      fi
+      ;;
+    internal/exporter/feature_collectors_test.go)
+      local reasons=()
+      local feature_test_file="$target_dir/internal/exporter/feature_test.go"
+      if [[ -f "$feature_test_file" ]]; then
+        if grep -Eq '^[[:space:]]*func[[:space:]]+TestFeatureRegistersCollector[[:space:]]*\(' "$feature_test_file"; then
+          reasons+=("TestFeatureRegistersCollector()")
+        fi
+        if grep -Eq '^[[:space:]]*func[[:space:]]+TestFeatureReportsCollectorRegistrationError[[:space:]]*\(' "$feature_test_file"; then
+          reasons+=("TestFeatureReportsCollectorRegistrationError()")
+        fi
+      fi
+      if [[ "${#reasons[@]}" -gt 0 ]]; then
+        echo "${reasons[*]} still defined in internal/exporter/feature_test.go"
+        return 0
+      fi
+      ;;
+    internal/exporter/runtime_config_test.go)
+      local feature_test_file="$target_dir/internal/exporter/feature_test.go"
+      if [[ -f "$feature_test_file" ]] && grep -Eq '^[[:space:]]*func[[:space:]]+TestFeatureRuntimeConfig[^[:space:]]*[[:space:]]*\(' "$feature_test_file"; then
+        echo "TestFeatureRuntimeConfig*() still defined in internal/exporter/feature_test.go"
+        return 0
+      fi
+      ;;
+    internal/exporter/identity_test.go)
+      local feature_test_file="$target_dir/internal/exporter/feature_test.go"
+      if [[ -f "$feature_test_file" ]] && grep -Eq '^[[:space:]]*func[[:space:]]+TestFeatureMetadata[[:space:]]*\(' "$feature_test_file"; then
+        echo "TestFeatureMetadata() still defined in internal/exporter/feature_test.go"
         return 0
       fi
       ;;
