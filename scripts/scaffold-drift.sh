@@ -61,6 +61,8 @@ Feature flags, collector registration, and runtime config are domain-specific;
 inspect split feature method drift with --file internal/exporter/feature_flags.go,
 --file internal/exporter/feature_collectors.go, or
 --file internal/exporter/runtime_config.go.
+Collector test helpers can be inspected with
+--file internal/exporter/collector_test_helpers_test.go.
 USAGE
 }
 
@@ -411,6 +413,28 @@ legacy_managed_go_reason() {
       fi
       if [[ "${#reasons[@]}" -gt 0 ]]; then
         echo "${reasons[*]} still defined in internal/exporter/collector.go"
+        return 0
+      fi
+      ;;
+    internal/exporter/collector_test_helpers_test.go)
+      local reasons=()
+      local collector_test_file="$target_dir/internal/exporter/collector_test.go"
+      if [[ -f "$collector_test_file" ]]; then
+        if grep -Eq '^[[:space:]]*type[[:space:]]+fakeSnapshotter([[:space:]]|$)' "$collector_test_file"; then
+          reasons+=("fakeSnapshotter")
+        fi
+        if grep -Eq '^[[:space:]]*func[[:space:]]+newFakeSnapshotter[[:space:]]*\(' "$collector_test_file"; then
+          reasons+=("newFakeSnapshotter()")
+        fi
+        if grep -Eq '^[[:space:]]*func[[:space:]]*\([^)]*\)[[:space:]]+Snapshot[[:space:]]*\(' "$collector_test_file"; then
+          reasons+=("fakeSnapshotter.Snapshot()")
+        fi
+        if grep -Eq '^[[:space:]]*func[[:space:]]*\([^)]*\)[[:space:]]+set[[:space:]]*\(' "$collector_test_file"; then
+          reasons+=("fakeSnapshotter.set()")
+        fi
+      fi
+      if [[ "${#reasons[@]}" -gt 0 ]]; then
+        echo "${reasons[*]} still defined in internal/exporter/collector_test.go"
         return 0
       fi
       ;;

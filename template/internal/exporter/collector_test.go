@@ -7,7 +7,6 @@ import (
 	"io"
 	"log/slog"
 	"strings"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -15,24 +14,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/exportertest"
 )
-
-type fakeSnapshotter struct {
-	snapshot atomic.Value
-}
-
-func newFakeSnapshotter(snapshot Snapshot) *fakeSnapshotter {
-	s := &fakeSnapshotter{}
-	s.snapshot.Store(snapshot)
-	return s
-}
-
-func (s *fakeSnapshotter) Snapshot(context.Context, time.Time) Snapshot {
-	return s.snapshot.Load().(Snapshot)
-}
-
-func (s *fakeSnapshotter) set(snapshot Snapshot) {
-	s.snapshot.Store(snapshot)
-}
 
 func TestCollectorExportsSnapshot(t *testing.T) {
 	t.Parallel()

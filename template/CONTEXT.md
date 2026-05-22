@@ -113,6 +113,7 @@ Default refresh interval:
   - placeholder snapshot gathering plus snapshot status/error adapters
 - `internal/exporter/*_test.go`
   - collector and feature tests
+  - split collector test helper in `collector_test_helpers_test.go`
 - `smoke/binary_test.go`
   - short `smoketest.Config`-based binary smoke test
 
