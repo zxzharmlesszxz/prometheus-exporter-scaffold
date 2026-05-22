@@ -85,6 +85,8 @@ scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file intern
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/feature_flags.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/feature_collectors.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/runtime_config.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/feature_test_helpers_test.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/feature_integration_test_helpers_test.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/collector_types.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/collector_metrics.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/collector_test_helpers_test.go
@@ -100,4 +102,6 @@ standard metric constants that still live in `metrics.go`, and for collector
 types, collector metric methods, and snapshot helpers that still live in
 `internal/exporter/collector.go`. Collector test helpers get the same guard
 while they still live in `internal/exporter/collector_test.go`, and domain
-feature methods get it while they still live in `internal/exporter/feature.go`.
+feature methods and test helpers get it while they still live in
+`internal/exporter/feature.go`, `feature_test.go`, or
+`feature_integration_test.go`.

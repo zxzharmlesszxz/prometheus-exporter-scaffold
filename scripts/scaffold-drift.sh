@@ -63,6 +63,9 @@ inspect split feature method drift with --file internal/exporter/feature_flags.g
 --file internal/exporter/runtime_config.go.
 Collector test helpers can be inspected with
 --file internal/exporter/collector_test_helpers_test.go.
+Feature test helpers can be inspected with
+--file internal/exporter/feature_test_helpers_test.go and
+--file internal/exporter/feature_integration_test_helpers_test.go.
 USAGE
 }
 
@@ -435,6 +438,29 @@ legacy_managed_go_reason() {
       fi
       if [[ "${#reasons[@]}" -gt 0 ]]; then
         echo "${reasons[*]} still defined in internal/exporter/collector_test.go"
+        return 0
+      fi
+      ;;
+    internal/exporter/feature_test_helpers_test.go)
+      local feature_test_file="$target_dir/internal/exporter/feature_test.go"
+      if [[ -f "$feature_test_file" ]] && grep -Eq '^[[:space:]]*func[[:space:]]+testFeatureContext[[:space:]]*\(' "$feature_test_file"; then
+        echo "testFeatureContext() still defined in internal/exporter/feature_test.go"
+        return 0
+      fi
+      ;;
+    internal/exporter/feature_integration_test_helpers_test.go)
+      local reasons=()
+      local feature_integration_test_file="$target_dir/internal/exporter/feature_integration_test.go"
+      if [[ -f "$feature_integration_test_file" ]]; then
+        if grep -Eq '^[[:space:]]*func[[:space:]]+newTestHandler[[:space:]]*\(' "$feature_integration_test_file"; then
+          reasons+=("newTestHandler()")
+        fi
+        if grep -Eq '^[[:space:]]*func[[:space:]]+waitForHandlerMetrics[[:space:]]*\(' "$feature_integration_test_file"; then
+          reasons+=("waitForHandlerMetrics()")
+        fi
+      fi
+      if [[ "${#reasons[@]}" -gt 0 ]]; then
+        echo "${reasons[*]} still defined in internal/exporter/feature_integration_test.go"
         return 0
       fi
       ;;

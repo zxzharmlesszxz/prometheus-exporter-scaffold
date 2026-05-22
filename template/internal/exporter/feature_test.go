@@ -1,14 +1,11 @@
 package exporter
 
 import (
-	"io"
-	"log/slog"
 	"testing"
 	"time"
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/prometheus/client_golang/prometheus"
-	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/exportertest"
 )
 
@@ -71,13 +68,5 @@ func TestFeatureMetadata(t *testing.T) {
 	}
 	if feature.DefaultListenAddress() != defaultListenAddress {
 		t.Fatalf("DefaultListenAddress() = %q, want %q", feature.DefaultListenAddress(), defaultListenAddress)
-	}
-}
-
-func testFeatureContext() framework.FeatureContext {
-	return framework.FeatureContext{
-		Logger:       slog.New(slog.NewTextHandler(io.Discard, nil)),
-		ExporterName: "__PROJECT_NAME__",
-		Namespace:    defaultMetricNamespace,
 	}
 }
