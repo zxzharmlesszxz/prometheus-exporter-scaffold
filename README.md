@@ -86,6 +86,7 @@ scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file intern
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/feature_collectors.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/runtime_config.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/collector_types.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/collector_metrics.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/snapshot.go
 ```
 
@@ -95,6 +96,6 @@ Older exporters may still define `Main()`, `FeatureName()`, or
 once when adopting the split scaffold Go files; the drift script will report
 `LEGACY` instead of syncing duplicate definitions. It reports the same guard for
 standard metric constants that still live in `metrics.go`, and for collector
-types and snapshot helpers that still live in `internal/exporter/collector.go`.
-Domain feature methods get the same guard while they still live in
-`internal/exporter/feature.go`.
+types, collector metric methods, and snapshot helpers that still live in
+`internal/exporter/collector.go`. Domain feature methods get the same guard
+while they still live in `internal/exporter/feature.go`.

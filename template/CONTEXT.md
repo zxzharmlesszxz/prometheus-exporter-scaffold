@@ -105,6 +105,8 @@ Default refresh interval:
   - snapshot-backed placeholder collector
   - example metric descriptor
   - common collection status metrics through the framework
+- `internal/exporter/collector_metrics.go`
+  - placeholder metric description and emission methods
 - `internal/exporter/collector_types.go`
   - placeholder collector, snapshot, and snapshot gatherer type declarations
 - `internal/exporter/snapshot.go`

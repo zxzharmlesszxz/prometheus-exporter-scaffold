@@ -53,6 +53,8 @@ internal/exporter/standard_metrics.go. Domain-specific metric constants should
 remain in internal/exporter/metrics.go.
 Collector types are domain-specific; inspect split collector type drift with
 --file internal/exporter/collector_types.go before migrating manually.
+Collector metric descriptors and emission are domain-specific; inspect split
+collector metric method drift with --file internal/exporter/collector_metrics.go.
 Snapshot gatherers and snapshot status/error adapters are also domain-specific;
 inspect them with --file internal/exporter/snapshot.go.
 Feature flags, collector registration, and runtime config are domain-specific;
@@ -389,6 +391,22 @@ legacy_managed_go_reason() {
         fi
         if grep -Eq '^[[:space:]]*type[[:space:]]+Collector([[:space:]]|$)' "$collector_file"; then
           reasons+=("Collector")
+        fi
+      fi
+      if [[ "${#reasons[@]}" -gt 0 ]]; then
+        echo "${reasons[*]} still defined in internal/exporter/collector.go"
+        return 0
+      fi
+      ;;
+    internal/exporter/collector_metrics.go)
+      local reasons=()
+      local collector_file="$target_dir/internal/exporter/collector.go"
+      if [[ -f "$collector_file" ]]; then
+        if grep -Eq '^[[:space:]]*func[[:space:]]*\([^)]*\)[[:space:]]+describeSnapshotMetrics[[:space:]]*\(' "$collector_file"; then
+          reasons+=("describeSnapshotMetrics()")
+        fi
+        if grep -Eq '^[[:space:]]*func[[:space:]]*\([^)]*\)[[:space:]]+collectSnapshotMetrics[[:space:]]*\(' "$collector_file"; then
+          reasons+=("collectSnapshotMetrics()")
         fi
       fi
       if [[ "${#reasons[@]}" -gt 0 ]]; then
