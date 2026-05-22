@@ -192,7 +192,7 @@ docker-smoke-image: ## Smoke-test an already built Docker image.
 	echo "$$metrics" | grep -F 'version="$(VERSION)"' >/dev/null; \
 	echo "$$metrics" | grep -F 'branch="$(BRANCH)"' >/dev/null; \
 	echo "$$metrics" | grep -F 'revision="$(REVISION)"' >/dev/null; \
-	echo "$$metrics" | grep -F "$(FEATURE_NAME)_example_value 1" >/dev/null; \
+	echo "$$metrics" | grep -F -- '$(DOCKER_SMOKE_METRIC)' >/dev/null; \
 	$(DOCKER) rm -f "$$cid" >/dev/null 2>&1 || true
 
 docker-smoke: docker-smoke-build ## Build and smoke-test the Docker image.

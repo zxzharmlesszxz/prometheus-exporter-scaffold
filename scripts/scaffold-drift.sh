@@ -26,6 +26,8 @@ Render metadata overrides:
   --feature-name NAME    Defaults to DefaultFeatureName/defaultFeatureName or FeatureName().
   --namespace NAME       Defaults to DefaultMetricNamespace, Namespace: from tests, or derived.
   --port PORT            Defaults to DefaultListenAddress/defaultListenAddress or 9888.
+  --docker-smoke-metric TEXT
+                         Defaults to DOCKER_SMOKE_METRIC from exporter.mk or skeleton default.
 
 File selection:
   --file PATH            Compare/sync this rendered path. Can be repeated.
@@ -92,6 +94,7 @@ project_desc=""
 feature_name=""
 metric_namespace=""
 default_port=""
+docker_smoke_metric=""
 custom_files=()
 
 default_files=(
@@ -148,6 +151,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --port)
       default_port="${2:-}"
+      shift 2
+      ;;
+    --docker-smoke-metric)
+      docker_smoke_metric="${2:-}"
       shift 2
       ;;
     --file)
@@ -365,6 +372,19 @@ detect_namespace() {
     return 0
   fi
   derive_namespace_from_project "${go_module:-$project_name}"
+}
+
+detect_docker_smoke_metric() {
+  [[ -f "$target_dir/exporter.mk" ]] || return 0
+  awk -F '\\?=' '
+    /^[[:space:]]*DOCKER_SMOKE_METRIC[[:space:]]*\?=/ {
+      value = $2
+      sub(/^[[:space:]]*/, "", value)
+      sub(/[[:space:]]*$/, "", value)
+      print value
+      exit
+    }
+  ' "$target_dir/exporter.mk"
 }
 
 feature_go_defines() {
@@ -677,6 +697,12 @@ fi
 if [[ -z "$default_port" ]]; then
   default_port="9888"
 fi
+if [[ -z "$docker_smoke_metric" ]]; then
+  docker_smoke_metric="$(detect_docker_smoke_metric)"
+fi
+if [[ -z "$docker_smoke_metric" ]]; then
+  docker_smoke_metric='$(FEATURE_NAME)_example_value 1'
+fi
 
 rendered_dir="$(mktemp -d)"
 trap 'rm -rf "$rendered_dir"' EXIT
@@ -688,6 +714,7 @@ trap 'rm -rf "$rendered_dir"' EXIT
   --feature-name "$feature_name" \
   --namespace "$metric_namespace" \
   --port "$default_port" \
+  --docker-smoke-metric "$docker_smoke_metric" \
   --target-dir "$rendered_dir" >/dev/null
 
 printf 'Scaffold metadata:\n'
@@ -698,6 +725,7 @@ printf '  description:  %s\n' "$project_desc"
 printf '  feature-name: %s\n' "$feature_name"
 printf '  namespace:    %s\n' "$metric_namespace"
 printf '  port:         %s\n' "$default_port"
+printf '  smoke-metric: %s\n' "$docker_smoke_metric"
 
 if [[ "$mode" == "sync" && "$allow_dirty" -ne 1 ]] && git -C "$target_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   dirty="$(git -C "$target_dir" status --short -- "${managed_files[@]}")"

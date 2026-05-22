@@ -125,6 +125,7 @@ Default refresh interval:
     `feature_integration_test_helpers_test.go`
 - `smoke/binary_test.go`
   - short `smoketest.Config`-based binary smoke test
+  - imports `internal/exporter/variables` for rendered exporter identity values
 
 When turning this into a real exporter, replace placeholder domain logic and
 examples while keeping the stable framework wiring.
@@ -157,6 +158,15 @@ exporter.mk
 `Makefile` includes `exporter.mk` and keeps target logic only. Existing
 exporters may customize target bodies, especially Docker smoke checks, while
 keeping `exporter.mk` scaffold-managed.
+
+Docker smoke has one exporter-specific assertion controlled by:
+
+```make
+DOCKER_SMOKE_METRIC ?= $(FEATURE_NAME)_example_value 1
+```
+
+The `docker-smoke-image` target greps for that value after standard health,
+build-info, and collection-success checks.
 
 ## Docker Notes
 

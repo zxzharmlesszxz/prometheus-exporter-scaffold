@@ -11,6 +11,7 @@ Usage:
     --feature-name demo \
     --namespace demo_exporter \
     --port 9888 \
+    --docker-smoke-metric '$(FEATURE_NAME)_example_value 1' \
     --target-dir /tmp/prometheus-demo-exporter
 
 Required:
@@ -23,6 +24,8 @@ Optional:
   --feature-name Defaults to project name without prometheus- prefix and -exporter suffix, with '-' replaced by '_'.
   --namespace   Defaults to <feature-name>_exporter.
   --port        Defaults to 9888.
+  --docker-smoke-metric
+               Defaults to '$(FEATURE_NAME)_example_value 1'.
 USAGE
 }
 
@@ -32,6 +35,7 @@ project_desc=""
 feature_name=""
 metric_namespace=""
 default_port="9888"
+docker_smoke_metric='$(FEATURE_NAME)_example_value 1'
 target_dir=""
 
 while [[ $# -gt 0 ]]; do
@@ -58,6 +62,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --port)
       default_port="${2:-}"
+      shift 2
+      ;;
+    --docker-smoke-metric)
+      docker_smoke_metric="${2:-}"
       shift 2
       ;;
     --target-dir)
@@ -102,6 +110,10 @@ if [[ ! "$default_port" =~ ^[0-9]+$ ]]; then
   echo "--port must be numeric: $default_port" >&2
   exit 1
 fi
+if [[ -z "$docker_smoke_metric" ]]; then
+  echo "--docker-smoke-metric must not be empty" >&2
+  exit 1
+fi
 
 if [[ -e "$target_dir" && -n "$(find "$target_dir" -mindepth 1 -maxdepth 1 -print -quit)" ]]; then
   echo "target dir exists and is not empty: $target_dir" >&2
@@ -121,6 +133,7 @@ export PROJECT_DESC="$project_desc"
 export FEATURE_NAME="$feature_name"
 export METRIC_NAMESPACE="$metric_namespace"
 export DEFAULT_PORT="$default_port"
+export DOCKER_SMOKE_METRIC="$docker_smoke_metric"
 
 sed_replacement() {
   local value="$1"
@@ -136,6 +149,7 @@ project_desc_sed="$(sed_replacement "$PROJECT_DESC")"
 feature_name_sed="$(sed_replacement "$FEATURE_NAME")"
 metric_namespace_sed="$(sed_replacement "$METRIC_NAMESPACE")"
 default_port_sed="$(sed_replacement "$DEFAULT_PORT")"
+docker_smoke_metric_sed="$(sed_replacement "$DOCKER_SMOKE_METRIC")"
 
 find "$target_dir" -type f -print0 | while IFS= read -r -d '' file; do
   sed -i.bak \
@@ -145,6 +159,7 @@ find "$target_dir" -type f -print0 | while IFS= read -r -d '' file; do
     -e "s|__FEATURE_NAME__|$feature_name_sed|g" \
     -e "s|__METRIC_NAMESPACE__|$metric_namespace_sed|g" \
     -e "s|__DEFAULT_PORT__|$default_port_sed|g" \
+    -e "s|__DOCKER_SMOKE_METRIC__|$docker_smoke_metric_sed|g" \
     "$file"
   rm -f "$file.bak"
 done
