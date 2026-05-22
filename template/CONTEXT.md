@@ -94,11 +94,13 @@ Default refresh interval:
   - stable `Main()` framework bootstrap
 - `internal/exporter/identity.go`
   - stable `FeatureName()` and `DefaultListenAddress()` methods
-- `internal/exporter/listen.go`
-  - rendered default listen address
+- `internal/exporter/variables/variables.go`
+  - rendered exporter name, description, feature name, metric namespace, and
+    default listen address
+- `internal/exporter/defaults.go`
+  - package-local aliases for rendered exporter values
 - `internal/exporter/standard_metrics.go`
-  - rendered feature name, metric namespace, build-info metric, and standard
-    collection status metric constants
+  - build-info metric and standard collection status metric constants
 - `internal/exporter/metrics.go`
   - placeholder domain/example metric constants
 - `internal/exporter/collector.go`
@@ -143,6 +145,18 @@ smoke, and race tests.
 `make check` also validates Prometheus and Docker Compose examples.
 
 `make full-check` adds Docker smoke and release smoke.
+
+## Makefile Shape
+
+Common override-able variables live in:
+
+```text
+exporter.mk
+```
+
+`Makefile` includes `exporter.mk` and keeps target logic only. Existing
+exporters may customize target bodies, especially Docker smoke checks, while
+keeping `exporter.mk` scaffold-managed.
 
 ## Docker Notes
 

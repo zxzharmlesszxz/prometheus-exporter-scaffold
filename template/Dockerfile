@@ -33,4 +33,3 @@ ARG PROJECT_NAME
 COPY --from=build /out/${PROJECT_NAME} /usr/local/bin/exporter
 
 ENTRYPOINT ["/usr/local/bin/exporter"]
-CMD ["--web.listen-address=:__DEFAULT_PORT__"]

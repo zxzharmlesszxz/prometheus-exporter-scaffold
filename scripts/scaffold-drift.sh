@@ -22,32 +22,36 @@ Modes:
 Render metadata overrides:
   --project-name NAME    Defaults to basename of --target-dir.
   --module MODULE        Defaults to module path from go.mod.
-  --description TEXT     Defaults to the first README.md H1 or project name.
-  --feature-name NAME    Defaults to defaultFeatureName or FeatureName() under internal/exporter.
-  --namespace NAME       Defaults to Namespace: from tests or derived from module.
-  --port PORT            Defaults to defaultListenAddress under internal/exporter or 9888.
+  --description TEXT     Defaults to rendered exporter description, README H1, or project name.
+  --feature-name NAME    Defaults to DefaultFeatureName/defaultFeatureName or FeatureName().
+  --namespace NAME       Defaults to DefaultMetricNamespace, Namespace: from tests, or derived.
+  --port PORT            Defaults to DefaultListenAddress/defaultListenAddress or 9888.
 
 File selection:
   --file PATH            Compare/sync this rendered path. Can be repeated.
   --list-files           Print the default managed file list and exit.
 
 Default managed files:
+  exporter.mk
   .dockerignore
   .github/workflows/ci.yml
   .gitignore
   .gitlab-ci.yml
   cmd/main.go
+  internal/exporter/defaults.go
   internal/exporter/identity.go
-  internal/exporter/listen.go
   internal/exporter/main.go
   internal/exporter/standard_metrics.go
+  internal/exporter/variables/variables.go
 
 Makefiles often contain domain-specific smoke-test commands in concrete
-exporters. Inspect them with --file Makefile and port relevant hunks manually.
+exporters. Inspect target logic with --file Makefile and port relevant hunks
+manually. Common make variables live in exporter.mk and are scaffold-managed.
 Dockerfiles can also be domain-specific when exporters need runtime packages.
 Legacy exporters may still define Main(), FeatureName(), or
-DefaultListenAddress() in internal/exporter/feature.go. Remove those definitions
-once when adopting the split scaffold Go files.
+DefaultListenAddress() in internal/exporter/feature.go, or keep rendered
+defaults in older files. Remove those definitions once when adopting the split
+scaffold Go files.
 Metric constants are split so scaffold-owned standard names live in
 internal/exporter/standard_metrics.go. Domain-specific metric constants should
 remain in internal/exporter/metrics.go.
@@ -91,15 +95,17 @@ default_port=""
 custom_files=()
 
 default_files=(
+  "exporter.mk"
   ".dockerignore"
   ".github/workflows/ci.yml"
   ".gitignore"
   ".gitlab-ci.yml"
   "cmd/main.go"
+  "internal/exporter/defaults.go"
   "internal/exporter/identity.go"
-  "internal/exporter/listen.go"
   "internal/exporter/main.go"
   "internal/exporter/standard_metrics.go"
+  "internal/exporter/variables/variables.go"
 )
 
 while [[ $# -gt 0 ]]; do
@@ -193,21 +199,66 @@ detect_module() {
 }
 
 detect_project_name() {
-  [[ -f "$target_dir/Makefile" ]] || return 0
-  awk -F '\\?=' '
-    /^[[:space:]]*PROJECT_NAME[[:space:]]*\?=/ {
-      value = $2
-      sub(/^[[:space:]]*/, "", value)
-      sub(/[[:space:]]*$/, "", value)
-      print value
-      exit
-    }
-  ' "$target_dir/Makefile"
+  local file value
+  for file in "$target_dir/exporter.mk" "$target_dir/Makefile"; do
+    [[ -f "$file" ]] || continue
+    value="$(awk -F '\\?=' '
+      /^[[:space:]]*PROJECT_NAME[[:space:]]*\?=/ {
+        value = $2
+        sub(/^[[:space:]]*/, "", value)
+        sub(/[[:space:]]*$/, "", value)
+        print value
+        exit
+      }
+    ' "$file")"
+    if [[ -n "$value" && "$value" != *'$('* ]]; then
+      printf '%s' "$value"
+      return 0
+    fi
+  done
+  if [[ -d "$target_dir/internal/exporter" ]]; then
+    while IFS= read -r file; do
+      value="$(awk '
+        /DefaultExporterName[[:space:]]*=/ && /"/ {
+          line = $0
+          sub(/^.*DefaultExporterName[[:space:]]*=[[:space:]]*"/, "", line)
+          sub(/".*$/, "", line)
+          print line
+          exit
+        }
+      ' "$file")"
+      if [[ -n "$value" ]]; then
+        printf '%s' "$value"
+        return 0
+      fi
+    done < <(find "$target_dir/internal/exporter" -type f -name '*.go' -print 2>/dev/null | sort)
+  fi
 }
 
 detect_readme_h1() {
   [[ -f "$target_dir/README.md" ]] || return 0
   awk '/^#[[:space:]]+/ {sub(/^#[[:space:]]+/, ""); print; exit}' "$target_dir/README.md"
+}
+
+detect_exporter_description() {
+  local dir="$target_dir/internal/exporter"
+  local file value
+  [[ -d "$dir" ]] || return 0
+  while IFS= read -r file; do
+    value="$(awk '
+      /DefaultExporterDescription[[:space:]]*=/ && /"/ {
+        line = $0
+        sub(/^.*DefaultExporterDescription[[:space:]]*=[[:space:]]*"/, "", line)
+        sub(/".*$/, "", line)
+        print line
+        exit
+      }
+    ' "$file")"
+    if [[ -n "$value" ]]; then
+      printf '%s' "$value"
+      return 0
+    fi
+  done < <(find "$dir" -type f -name '*.go' -print 2>/dev/null | sort)
 }
 
 detect_feature_name() {
@@ -219,6 +270,13 @@ detect_feature_name() {
       /defaultFeatureName[[:space:]]*=/ && /"/ {
         line = $0
         sub(/^.*defaultFeatureName[[:space:]]*=[[:space:]]*"/, "", line)
+        sub(/".*$/, "", line)
+        print line
+        exit
+      }
+      /DefaultFeatureName[[:space:]]*=/ && /"/ {
+        line = $0
+        sub(/^.*DefaultFeatureName[[:space:]]*=[[:space:]]*"/, "", line)
         sub(/".*$/, "", line)
         print line
         exit
@@ -247,6 +305,13 @@ detect_default_port() {
   while IFS= read -r file; do
     value="$(awk '
       /defaultListenAddress[[:space:]]*=/ && /":[0-9]+"/ {
+        line = $0
+        sub(/^.*:"?/, "", line)
+        sub(/".*$/, "", line)
+        print line
+        exit
+      }
+      /DefaultListenAddress[[:space:]]*=/ && /":[0-9]+"/ {
         line = $0
         sub(/^.*:"?/, "", line)
         sub(/".*$/, "", line)
@@ -288,7 +353,11 @@ detect_namespace() {
   local match=""
   if [[ -d "$target_dir/internal/exporter" ]]; then
     match="$(find "$target_dir/internal/exporter" -type f -name '*.go' -print 2>/dev/null | sort | while IFS= read -r file; do
-      sed -n 's/.*Namespace:[[:space:]]*"\([^"]*\)".*/\1/p' "$file"
+      sed -n \
+        -e 's/.*DefaultMetricNamespace[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' \
+        -e 's/.*defaultMetricNamespace[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' \
+        -e 's/.*Namespace:[[:space:]]*"\([^"]*\)".*/\1/p' \
+        "$file"
     done | head -n 1)"
   fi
   if [[ -n "$match" ]]; then
@@ -344,20 +413,30 @@ legacy_managed_go_reason() {
         return 0
       fi
       ;;
-    internal/exporter/listen.go)
-      if exporter_go_defines_except "$file" '^[[:space:]]*defaultListenAddress[[:space:]]*='; then
-        echo "defaultListenAddress still defined outside internal/exporter/listen.go"
-        return 0
-      fi
-      ;;
-    internal/exporter/standard_metrics.go)
+    internal/exporter/defaults.go)
       local reasons=()
+      if exporter_go_defines_except "$file" '^[[:space:]]*defaultExporterName[[:space:]]*='; then
+        reasons+=("defaultExporterName")
+      fi
+      if exporter_go_defines_except "$file" '^[[:space:]]*defaultExporterDescription[[:space:]]*='; then
+        reasons+=("defaultExporterDescription")
+      fi
       if exporter_go_defines_except "$file" '^[[:space:]]*defaultFeatureName[[:space:]]*='; then
         reasons+=("defaultFeatureName")
       fi
       if exporter_go_defines_except "$file" '^[[:space:]]*defaultMetricNamespace[[:space:]]*='; then
         reasons+=("defaultMetricNamespace")
       fi
+      if exporter_go_defines_except "$file" '^[[:space:]]*defaultListenAddress[[:space:]]*='; then
+        reasons+=("defaultListenAddress")
+      fi
+      if [[ "${#reasons[@]}" -gt 0 ]]; then
+        echo "${reasons[*]} still defined outside internal/exporter/defaults.go"
+        return 0
+      fi
+      ;;
+    internal/exporter/standard_metrics.go)
+      local reasons=()
       if exporter_go_defines_except "$file" '^[[:space:]]*metricBuildInfo[[:space:]]*='; then
         reasons+=("metricBuildInfo")
       fi
@@ -571,6 +650,9 @@ if [[ -z "$project_name" ]]; then
 fi
 if [[ -z "$project_name" ]]; then
   project_name="$(basename "$target_dir")"
+fi
+if [[ -z "$project_desc" ]]; then
+  project_desc="$(detect_exporter_description)"
 fi
 if [[ -z "$project_desc" ]]; then
   project_desc="$(detect_readme_h1)"

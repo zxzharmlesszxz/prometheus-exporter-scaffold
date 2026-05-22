@@ -25,8 +25,8 @@ func newTestHandler(t *testing.T) http.Handler {
 	}
 
 	return framework.NewHandler(framework.HandlerOptions{
-		Name:        "__PROJECT_NAME__",
-		Description: "__PROJECT_DESC__",
+		Name:        defaultExporterName,
+		Description: defaultExporterDescription,
 		MetricsPath: "/metrics",
 		Registry:    registry,
 	})

@@ -1,43 +1,10 @@
-GO ?= go
-GOFMT ?= gofmt
-DOCKER ?= docker
-STATICCHECK_VERSION ?= v0.7.0
-STATICCHECK ?= $(GO) run honnef.co/go/tools/cmd/staticcheck@$(STATICCHECK_VERSION)
-STATICCHECK_GOFLAGS ?= -buildvcs=false
-COVERAGE_PROFILE ?= coverage.out
-COVERAGE_REPORT ?= coverage.txt
-COVERAGE_THRESHOLD ?= 85.0
-PROJECT_NAME ?= __PROJECT_NAME__
-MAIN_PACKAGE ?= ./cmd
-DIST_DIR ?= dist
-BUILD_OUTPUT ?= $(DIST_DIR)/$(PROJECT_NAME)
-CGO_ENABLED ?= 0
-VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
-BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo dev)
-REVISION ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo dev)
-BUILD_USER ?= $(shell whoami 2>/dev/null || echo unknown)
-BUILD_DATE ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
-LDFLAGS ?= -s -w -X github.com/prometheus/common/version.Version=$(VERSION) -X github.com/prometheus/common/version.Branch=$(BRANCH) -X github.com/prometheus/common/version.Revision=$(REVISION) -X github.com/prometheus/common/version.BuildUser=$(BUILD_USER) -X github.com/prometheus/common/version.BuildDate=$(BUILD_DATE)
-PLATFORMS ?= linux/amd64 linux/arm64 darwin/amd64 darwin/arm64
-IMAGE_TAG ?= $(VERSION)
-DOCKER_IMAGE ?= $(PROJECT_NAME):$(IMAGE_TAG)
-DOCKER_ENTRYPOINT_NAME ?= exporter
-DOCKER_HTTP_IMAGE ?= busybox:1.36
-DOCKER_PLATFORMS ?= linux/amd64,linux/arm64
-PROMTOOL_IMAGE ?= prom/prometheus:latest
-DOCKER_COMPOSE ?= $(DOCKER) compose
-SMOKE_DOCKER_IMAGE ?= $(PROJECT_NAME):smoke
-SMOKE_VERSION ?= v9.8.7
-SMOKE_BRANCH ?= smoke-branch
-SMOKE_REVISION ?= abc123def
-SMOKE_BUILD_USER ?= smoke-test
-SMOKE_BUILD_DATE ?= 2026-05-17T00:00:00Z
+include exporter.mk
 
 .PHONY: help build release release-archives release-checksums release-smoke docker-build docker-buildx docker-buildx-push docker-push fmt fmt-check vet staticcheck test test-race coverage coverage-check smoke promtool-check compose-config examples-check docker-smoke-build docker-smoke-image docker-smoke go-check check full-check clean
 
 help: ## Show available make targets.
 	@printf "\033[33mUsage:\033[0m\n"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "};{printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "};{printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 fmt: ## Format Go files.
 	$(GOFMT) -w $$($(GO) list -f '{{range .GoFiles}}{{$$.Dir}}/{{.}} {{end}}{{range .TestGoFiles}}{{$$.Dir}}/{{.}} {{end}}' ./...)
@@ -192,7 +159,7 @@ docker-smoke-image: ## Smoke-test an already built Docker image.
 	echo "$$version_output" | grep -F "$(VERSION)" >/dev/null; \
 	echo "$$version_output" | grep -F "$(BRANCH)" >/dev/null; \
 	echo "$$version_output" | grep -F "$(REVISION)" >/dev/null
-	@cid="$$( $(DOCKER) run -d --rm $(DOCKER_IMAGE) --log.level=error --web.listen-address=:9900 --__FEATURE_NAME__.refresh-interval=100ms )"; \
+	@cid="$$( $(DOCKER) run -d --rm $(DOCKER_IMAGE) --log.level=error --web.listen-address=:9900 --$(FEATURE_NAME).refresh-interval=100ms )"; \
 	trap "$(DOCKER) rm -f $$cid >/dev/null 2>&1 || true" EXIT; \
 	i=0; \
 	while [ "$$i" -lt 60 ]; do \
@@ -211,7 +178,7 @@ docker-smoke-image: ## Smoke-test an already built Docker image.
 	while [ "$$i" -lt 60 ]; do \
 		i=$$((i + 1)); \
 		metrics="$$( $(DOCKER) run --rm --network container:$$cid $(DOCKER_HTTP_IMAGE) wget -qO- http://127.0.0.1:9900/metrics )"; \
-		if echo "$$metrics" | grep -F '__METRIC_NAMESPACE___last_collection_success 1' >/dev/null; then \
+		if echo "$$metrics" | grep -F '$(METRIC_NAMESPACE)_last_collection_success 1' >/dev/null; then \
 			break; \
 		fi; \
 		if [ "$$i" -eq 60 ]; then \
@@ -221,11 +188,11 @@ docker-smoke-image: ## Smoke-test an already built Docker image.
 		fi; \
 		sleep 1; \
 	done; \
-	echo "$$metrics" | grep -F "__METRIC_NAMESPACE___build_info" >/dev/null; \
+	echo "$$metrics" | grep -F "$(METRIC_NAMESPACE)_build_info" >/dev/null; \
 	echo "$$metrics" | grep -F 'version="$(VERSION)"' >/dev/null; \
 	echo "$$metrics" | grep -F 'branch="$(BRANCH)"' >/dev/null; \
 	echo "$$metrics" | grep -F 'revision="$(REVISION)"' >/dev/null; \
-	echo "$$metrics" | grep -F '__FEATURE_NAME___example_value 1' >/dev/null; \
+	echo "$$metrics" | grep -F "$(FEATURE_NAME)_example_value 1" >/dev/null; \
 	$(DOCKER) rm -f "$$cid" >/dev/null 2>&1 || true
 
 docker-smoke: docker-smoke-build ## Build and smoke-test the Docker image.

@@ -10,7 +10,7 @@ import (
 func testFeatureContext() framework.FeatureContext {
 	return framework.FeatureContext{
 		Logger:       slog.New(slog.NewTextHandler(io.Discard, nil)),
-		ExporterName: "__PROJECT_NAME__",
+		ExporterName: defaultExporterName,
 		Namespace:    defaultMetricNamespace,
 	}
 }
