@@ -74,10 +74,20 @@ scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --sync
 ```
 
 The default managed set is intentionally conservative: CI files, ignore files,
-and `cmd/main.go`. Concrete exporters often customize `Makefile` Docker smoke
-commands, Dockerfiles, and examples, so inspect those separately:
+`cmd/main.go`, and split scaffold-owned Go wiring under `internal/exporter`.
+Concrete exporters often customize `Makefile` Docker smoke commands,
+Dockerfiles, and examples, so inspect those separately:
 
 ```bash
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file Makefile
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file Dockerfile
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/collector_types.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/snapshot.go
 ```
+
+Older exporters may still define `Main()`, `FeatureName()`, or
+`DefaultListenAddress()` inside `internal/exporter/feature.go`. Remove those
+definitions once when adopting the split scaffold Go files; the drift script
+will report `LEGACY` instead of syncing duplicate definitions. It reports the
+same guard for collector types and snapshot helpers that still live in
+`internal/exporter/collector.go`.

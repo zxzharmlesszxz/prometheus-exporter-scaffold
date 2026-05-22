@@ -25,18 +25,6 @@ func NewFeature() *Feature {
 	}
 }
 
-func Main() {
-	framework.MainFromProject(NewFeature())
-}
-
-func (f *Feature) FeatureName() string {
-	return defaultFeatureName
-}
-
-func (f *Feature) DefaultListenAddress() string {
-	return defaultListenAddress
-}
-
 func (f *Feature) RegisterFlags(app *kingpin.Application) {
 	app.Flag(
 		defaultFeatureName+".refresh-interval", "How often exporter refreshes "+defaultFeatureName+" data",

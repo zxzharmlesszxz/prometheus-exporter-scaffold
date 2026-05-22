@@ -23,7 +23,7 @@ Render metadata overrides:
   --project-name NAME    Defaults to basename of --target-dir.
   --module MODULE        Defaults to module path from go.mod.
   --description TEXT     Defaults to the first README.md H1 or project name.
-  --feature-name NAME    Defaults to FeatureName() from internal/exporter/feature.go.
+  --feature-name NAME    Defaults to defaultFeatureName or FeatureName() under internal/exporter.
   --namespace NAME       Defaults to Namespace: from tests or derived from module.
   --port PORT            Defaults to defaultListenAddress from feature.go or 9888.
 
@@ -37,10 +37,20 @@ Default managed files:
   .gitignore
   .gitlab-ci.yml
   cmd/main.go
+  internal/exporter/identity.go
+  internal/exporter/main.go
+  internal/exporter/metrics.go
 
 Makefiles often contain domain-specific smoke-test commands in concrete
 exporters. Inspect them with --file Makefile and port relevant hunks manually.
 Dockerfiles can also be domain-specific when exporters need runtime packages.
+Legacy exporters may still define Main(), FeatureName(), or
+DefaultListenAddress() in internal/exporter/feature.go. Remove those definitions
+once when adopting the split scaffold Go files.
+Collector types are domain-specific; inspect split collector type drift with
+--file internal/exporter/collector_types.go before migrating manually.
+Snapshot gatherers and snapshot status/error adapters are also domain-specific;
+inspect them with --file internal/exporter/snapshot.go.
 USAGE
 }
 
@@ -62,6 +72,9 @@ default_files=(
   ".gitignore"
   ".gitlab-ci.yml"
   "cmd/main.go"
+  "internal/exporter/identity.go"
+  "internal/exporter/main.go"
+  "internal/exporter/metrics.go"
 )
 
 while [[ $# -gt 0 ]]; do
@@ -173,18 +186,33 @@ detect_readme_h1() {
 }
 
 detect_feature_name() {
-  local file="$target_dir/internal/exporter/feature.go"
-  [[ -f "$file" ]] || return 0
-  awk '
-    /FeatureName\(\)[[:space:]]+string/ {in_func = 1}
-    in_func && /return[[:space:]]+"/ {
-      line = $0
-      sub(/^.*return[[:space:]]+"/, "", line)
-      sub(/".*$/, "", line)
-      print line
-      exit
-    }
-  ' "$file"
+  local dir="$target_dir/internal/exporter"
+  local file value
+  [[ -d "$dir" ]] || return 0
+  while IFS= read -r file; do
+    value="$(awk '
+      /defaultFeatureName[[:space:]]*=/ && /"/ {
+        line = $0
+        sub(/^.*defaultFeatureName[[:space:]]*=[[:space:]]*"/, "", line)
+        sub(/".*$/, "", line)
+        print line
+        exit
+      }
+      /FeatureName\(\)[[:space:]]+string/ {in_func = 1}
+      in_func && /return[[:space:]]+"/ {
+        line = $0
+        sub(/^.*return[[:space:]]+"/, "", line)
+        sub(/".*$/, "", line)
+        print line
+        exit
+      }
+      in_func && /^}/ {in_func = 0}
+    ' "$file")"
+    if [[ -n "$value" ]]; then
+      printf '%s' "$value"
+      return 0
+    fi
+  done < <(find "$dir" -type f -name '*.go' -print 2>/dev/null | sort)
 }
 
 detect_default_port() {
@@ -236,6 +264,77 @@ detect_namespace() {
     return 0
   fi
   derive_namespace_from_project "${go_module:-$project_name}"
+}
+
+feature_go_defines() {
+  local pattern="$1"
+  local file="$target_dir/internal/exporter/feature.go"
+  [[ -f "$file" ]] || return 1
+  grep -Eq "$pattern" "$file"
+}
+
+legacy_managed_go_reason() {
+  local file="$1"
+  case "$file" in
+    internal/exporter/main.go)
+      if feature_go_defines '^[[:space:]]*func[[:space:]]+Main[[:space:]]*\('; then
+        echo "Main() is still defined in internal/exporter/feature.go"
+        return 0
+      fi
+      ;;
+    internal/exporter/identity.go)
+      local reasons=()
+      if feature_go_defines '^[[:space:]]*func[[:space:]]*\([^)]*\)[[:space:]]+FeatureName[[:space:]]*\('; then
+        reasons+=("FeatureName()")
+      fi
+      if feature_go_defines '^[[:space:]]*func[[:space:]]*\([^)]*\)[[:space:]]+DefaultListenAddress[[:space:]]*\('; then
+        reasons+=("DefaultListenAddress()")
+      fi
+      if [[ "${#reasons[@]}" -gt 0 ]]; then
+        echo "${reasons[*]} still defined in internal/exporter/feature.go"
+        return 0
+      fi
+      ;;
+    internal/exporter/collector_types.go)
+      local reasons=()
+      local collector_file="$target_dir/internal/exporter/collector.go"
+      if [[ -f "$collector_file" ]]; then
+        if grep -Eq '^[[:space:]]*type[[:space:]]+Snapshot([[:space:]]|$)' "$collector_file"; then
+          reasons+=("Snapshot")
+        fi
+        if grep -Eq '^[[:space:]]*type[[:space:]]+SnapshotGatherer([[:space:]]|$)' "$collector_file"; then
+          reasons+=("SnapshotGatherer")
+        fi
+        if grep -Eq '^[[:space:]]*type[[:space:]]+Collector([[:space:]]|$)' "$collector_file"; then
+          reasons+=("Collector")
+        fi
+      fi
+      if [[ "${#reasons[@]}" -gt 0 ]]; then
+        echo "${reasons[*]} still defined in internal/exporter/collector.go"
+        return 0
+      fi
+      ;;
+    internal/exporter/snapshot.go)
+      local reasons=()
+      local collector_file="$target_dir/internal/exporter/collector.go"
+      if [[ -f "$collector_file" ]]; then
+        if grep -Eq '^[[:space:]]*func[[:space:]]*\(SnapshotGatherer\)[[:space:]]+Snapshot[[:space:]]*\(' "$collector_file"; then
+          reasons+=("SnapshotGatherer.Snapshot()")
+        fi
+        if grep -Eq '^[[:space:]]*func[[:space:]]+snapshotStatus[[:space:]]*\(' "$collector_file"; then
+          reasons+=("snapshotStatus()")
+        fi
+        if grep -Eq '^[[:space:]]*func[[:space:]]+logSnapshotError[[:space:]]*\(' "$collector_file"; then
+          reasons+=("logSnapshotError()")
+        fi
+      fi
+      if [[ "${#reasons[@]}" -gt 0 ]]; then
+        echo "${reasons[*]} still defined in internal/exporter/collector.go"
+        return 0
+      fi
+      ;;
+  esac
+  return 1
 }
 
 if [[ -z "$go_module" ]]; then
@@ -310,6 +409,13 @@ for file in "${managed_files[@]}"; do
 
   if [[ ! -e "$rendered_file" ]]; then
     echo "SKIP    $file (not rendered)"
+    continue
+  fi
+
+  legacy_reason="$(legacy_managed_go_reason "$file" || true)"
+  if [[ -n "$legacy_reason" ]]; then
+    echo "LEGACY $file ($legacy_reason; migrate before syncing this file)"
+    drift=1
     continue
   fi
 

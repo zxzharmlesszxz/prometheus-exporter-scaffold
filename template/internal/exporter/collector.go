@@ -1,36 +1,12 @@
 package exporter
 
 import (
-	"context"
 	"log/slog"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
 )
-
-type Snapshot struct {
-	AttemptTime time.Time
-	Success     bool
-	Value       float64
-	Err         error
-}
-
-type SnapshotGatherer struct{}
-
-func (SnapshotGatherer) Snapshot(_ context.Context, now time.Time) Snapshot {
-	return Snapshot{
-		AttemptTime: now,
-		Success:     true,
-		Value:       1,
-	}
-}
-
-type Collector struct {
-	*framework.SnapshotCollector[Snapshot]
-
-	exampleValueDesc *prometheus.Desc
-}
 
 func NewCollector(namespace string, logger *slog.Logger, snapshotter framework.Snapshotter[Snapshot], refreshInterval time.Duration) *Collector {
 	return newCollectorWithNow(namespace, logger, snapshotter, refreshInterval, nil)
@@ -89,17 +65,4 @@ func (c *Collector) collectSnapshotMetrics(ch chan<- prometheus.Metric, snapshot
 		prometheus.GaugeValue,
 		snapshot.Value,
 	)
-}
-
-func snapshotStatus(snapshot Snapshot) framework.SnapshotStatus {
-	return framework.SnapshotStatus{
-		AttemptTime: snapshot.AttemptTime,
-		Success:     snapshot.Success,
-	}
-}
-
-func logSnapshotError(logger *slog.Logger, snapshot Snapshot) {
-	if snapshot.Err != nil {
-		logger.Error(defaultFeatureName+" data collection failed", "err", snapshot.Err)
-	}
 }

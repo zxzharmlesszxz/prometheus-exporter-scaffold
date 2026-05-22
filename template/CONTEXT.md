@@ -87,12 +87,20 @@ Default refresh interval:
   - flag registration
   - runtime config
   - collector registration
+- `internal/exporter/main.go`
+  - stable `Main()` framework bootstrap
+- `internal/exporter/identity.go`
+  - stable `FeatureName()` and `DefaultListenAddress()` methods
 - `internal/exporter/metrics.go`
   - rendered feature name, metric namespace, and standard metric-name constants
 - `internal/exporter/collector.go`
   - snapshot-backed placeholder collector
   - example metric descriptor
   - common collection status metrics through the framework
+- `internal/exporter/collector_types.go`
+  - placeholder collector, snapshot, and snapshot gatherer type declarations
+- `internal/exporter/snapshot.go`
+  - placeholder snapshot gathering plus snapshot status/error adapters
 - `internal/exporter/*_test.go`
   - collector and feature tests
 - `smoke/binary_test.go`
