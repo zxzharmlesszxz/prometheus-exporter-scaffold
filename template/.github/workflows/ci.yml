@@ -1,0 +1,253 @@
+---
+
+name: CI
+
+on:
+  push:
+    branches:
+      - "**"
+    tags:
+      - "**"
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PROJECT_NAME: ${{ github.event.repository.name }}
+  RELEASE_PLATFORMS: "linux/amd64 linux/arm64 darwin/amd64 darwin/arm64"
+  DOCKER_PLATFORMS: "linux/amd64,linux/arm64"
+
+permissions:
+  contents: read
+
+jobs:
+  go-check:
+    name: Go Check
+    runs-on: ubuntu-24.04
+    container:
+      image: golang:1.26.3-alpine
+
+    steps:
+      - name: Prepare Alpine
+        run: apk add --no-cache bash build-base ca-certificates git make
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Prepare Version
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            version="${GITHUB_REF_NAME}"
+          else
+            version="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-dev}}"
+          fi
+          branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-detached}}"
+          revision="${GITHUB_SHA::12}"
+          {
+            echo "VERSION_VALUE=${version}"
+            echo "BRANCH_VALUE=${branch}"
+            echo "REVISION_VALUE=${revision}"
+            echo "BUILD_USER_VALUE=github-actions"
+            echo "BUILD_DATE_VALUE=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } >> "$GITHUB_ENV"
+
+      - name: Run Go Checks
+        run: |
+          make go-check \
+            VERSION="${VERSION_VALUE}" \
+            BRANCH="${BRANCH_VALUE}" \
+            REVISION="${REVISION_VALUE}" \
+            BUILD_USER="${BUILD_USER_VALUE}" \
+            BUILD_DATE="${BUILD_DATE_VALUE}"
+
+  build:
+    name: Build Binary
+    runs-on: ubuntu-24.04
+    container:
+      image: golang:1.26.3-alpine
+    needs:
+      - go-check
+
+    steps:
+      - name: Prepare Alpine
+        run: apk add --no-cache bash ca-certificates git make
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Build
+        run: make build
+
+  docker-check:
+    name: Docker And Examples Check
+    runs-on: ubuntu-24.04
+    container:
+      image: docker:27
+    services:
+      docker:
+        image: docker:27-dind
+        options: --privileged
+        env:
+          DOCKER_TLS_CERTDIR: ""
+    env:
+      DOCKER_HOST: tcp://docker:2375
+      DOCKER_TLS_CERTDIR: ""
+      DOCKER_DRIVER: overlay2
+    needs:
+      - go-check
+
+    steps:
+      - name: Prepare Alpine
+        run: apk add --no-cache bash ca-certificates docker-cli-compose git make
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Wait For Docker
+        shell: sh
+        run: |
+          for i in $(seq 1 60); do
+            if docker info >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker info
+
+      - name: Examples Check
+        run: make examples-check
+
+      - name: Docker Smoke
+        run: make docker-smoke SMOKE_DOCKER_IMAGE="${PROJECT_NAME}:make-smoke"
+
+  release:
+    name: Release Artifacts
+    runs-on: ubuntu-24.04
+    container:
+      image: golang:1.26.3-alpine
+    if: startsWith(github.ref, 'refs/tags/')
+    needs:
+      - go-check
+      - docker-check
+    permissions:
+      contents: write
+
+    steps:
+      - name: Prepare Alpine
+        run: apk add --no-cache bash ca-certificates git github-cli make tar
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Prepare Version
+        shell: bash
+        run: |
+          revision="${GITHUB_SHA::12}"
+          {
+            echo "VERSION_VALUE=${GITHUB_REF_NAME}"
+            echo "BRANCH_VALUE=${GITHUB_REF_NAME}"
+            echo "REVISION_VALUE=${revision}"
+            echo "BUILD_USER_VALUE=github-actions"
+            echo "BUILD_DATE_VALUE=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } >> "$GITHUB_ENV"
+
+      - name: Build Release Archives
+        run: |
+          make release-smoke \
+            VERSION="${VERSION_VALUE}" \
+            BRANCH="${BRANCH_VALUE}" \
+            REVISION="${REVISION_VALUE}" \
+            BUILD_USER="${BUILD_USER_VALUE}" \
+            BUILD_DATE="${BUILD_DATE_VALUE}" \
+            PLATFORMS="${RELEASE_PLATFORMS}"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" dist/*.tar.gz dist/checksums.txt --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" dist/*.tar.gz dist/checksums.txt \
+              --title "${GITHUB_REF_NAME}" \
+              --notes "Release ${GITHUB_REF_NAME}"
+          fi
+
+  docker-publish:
+    name: Publish Docker Image
+    runs-on: ubuntu-24.04
+    container:
+      image: docker:27
+    services:
+      docker:
+        image: docker:27-dind
+        options: --privileged
+        env:
+          DOCKER_TLS_CERTDIR: ""
+    env:
+      DOCKER_HOST: tcp://docker:2375
+      DOCKER_TLS_CERTDIR: ""
+      DOCKER_DRIVER: overlay2
+    if: startsWith(github.ref, 'refs/tags/')
+    needs:
+      - go-check
+      - docker-check
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Prepare Alpine
+        run: apk add --no-cache bash ca-certificates docker-cli-buildx git make
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Wait For Docker
+        shell: sh
+        run: |
+          for i in $(seq 1 60); do
+            if docker info >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker info
+
+      - name: Prepare Docker Builder
+        run: |
+          docker run --privileged --rm tonistiigi/binfmt --install all
+          docker buildx create --use --name ci-builder || docker buildx use ci-builder
+
+      - name: Login To GHCR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "${GH_TOKEN}" | docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+
+      - name: Prepare Version
+        shell: bash
+        run: |
+          image_name="ghcr.io/${GITHUB_REPOSITORY,,}"
+          revision="${GITHUB_SHA::12}"
+          {
+            echo "DOCKER_IMAGE_VALUE=${image_name}:${GITHUB_REF_NAME}"
+            echo "VERSION_VALUE=${GITHUB_REF_NAME}"
+            echo "BRANCH_VALUE=${GITHUB_REF_NAME}"
+            echo "REVISION_VALUE=${revision}"
+            echo "BUILD_USER_VALUE=github-actions"
+            echo "BUILD_DATE_VALUE=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } >> "$GITHUB_ENV"
+
+      - name: Publish Multi-Arch Image
+        run: |
+          make docker-buildx-push \
+            VERSION="${VERSION_VALUE}" \
+            BRANCH="${BRANCH_VALUE}" \
+            REVISION="${REVISION_VALUE}" \
+            BUILD_USER="${BUILD_USER_VALUE}" \
+            BUILD_DATE="${BUILD_DATE_VALUE}" \
+            DOCKER_IMAGE="${DOCKER_IMAGE_VALUE}" \
+            DOCKER_PLATFORMS="${DOCKER_PLATFORMS}"

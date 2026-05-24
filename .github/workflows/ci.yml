@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  render-check:
+    name: Render Check
+    runs-on: ubuntu-24.04
+    container:
+      image: golang:1.26.3-alpine
+
+    steps:
+      - name: Prepare Alpine
+        run: apk add --no-cache bash build-base ca-certificates git make
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Check script syntax
+        run: |
+          bash -n scripts/render.sh
+          bash -n scripts/scaffold-drift.sh
+
+      - name: Render demo exporter
+        run: |
+          tmp="$(mktemp -d)"
+          echo "RENDERED_EXPORTER=$tmp" >> "$GITHUB_ENV"
+
+          scripts/render.sh \
+            --project-name prometheus-demo-exporter \
+            --module github.com/zxzharmlesszxz/prometheus-demo-exporter \
+            --description "Prometheus Demo Exporter" \
+            --feature-name demo \
+            --namespace demo_exporter \
+            --port 9888 \
+            --target-dir "$tmp"
+
+      - name: Check rendered placeholders
+        run: |
+          if grep -R -n -E '__[A-Z0-9_]+__' "$RENDERED_EXPORTER"; then
+            echo "rendered exporter still contains scaffold placeholders" >&2
+            exit 1
+          fi
+
+      - name: Run generated Go checks
+        run: |
+          cd "$RENDERED_EXPORTER"
+          go mod tidy
+          make go-check GO=go GOFMT=gofmt

@@ -1,0 +1,73 @@
+services:
+  exporter:
+    build:
+      context: .
+      args:
+        PROJECT_NAME: ${PROJECT_NAME:-exporter}
+        LDFLAGS: ${LDFLAGS:-}
+    command:
+      - --web.listen-address=:${COMPOSE_EXPORTER_PORT:-9888}
+      - --${FEATURE_NAME:-exporter}.refresh-interval=30s
+    ports:
+      - "${COMPOSE_EXPORTER_PORT:-9888}:${COMPOSE_EXPORTER_PORT:-9888}"
+
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    ports:
+      - "9090:9090"
+    depends_on:
+      exporter:
+        condition: service_started
+    volumes:
+      - ./examples/prometheus/:/etc/prometheus/:ro
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    configs:
+      - source: grafana_prometheus_datasource
+        target: /etc/grafana/provisioning/datasources/prometheus.yml
+      - source: grafana_dashboards_provider
+        target: /etc/grafana/provisioning/dashboards/dashboards.yml
+    volumes:
+      - ./examples/grafana/:/var/lib/grafana/dashboards/:ro
+    depends_on:
+      prometheus:
+        condition: service_started
+
+configs:
+  grafana_prometheus_datasource:
+    content: |
+      apiVersion: 1
+
+      datasources:
+        - name: Prometheus
+          uid: DS_PROMETHEUS
+          type: prometheus
+          access: proxy
+          url: http://prometheus:9090
+          isDefault: true
+          editable: false
+  grafana_dashboards_provider:
+    content: |
+      apiVersion: 1
+
+      providers:
+        - name: ${PROJECT_DESC:-Exporter}
+          orgId: 1
+          folder: Exporters
+          type: file
+          disableDeletion: true
+          editable: false
+          updateIntervalSeconds: 30
+          options:
+            path: /var/lib/grafana/dashboards
