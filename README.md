@@ -45,7 +45,7 @@ have defaults, but passing them explicitly keeps the generated repository
 predictable.
 
 The generated `cmd/main.go` is intentionally stable. Project metadata is
-injected by Makefile linker flags from `exporter.mk`, while the concrete feature
+injected by Makefile linker flags from `Makefile.mk`, while the concrete feature
 package owns domain behavior.
 
 ## Framework Version

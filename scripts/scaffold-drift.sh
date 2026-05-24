@@ -28,14 +28,14 @@ Render metadata overrides:
   --namespace NAME       Defaults to DefaultMetricNamespace, Namespace: from tests, or derived.
   --port PORT            Defaults to DefaultListenAddress/defaultListenAddress or 9888.
   --docker-smoke-metric TEXT
-                         Defaults to DOCKER_SMOKE_METRIC from exporter.mk or skeleton default.
+                         Defaults to DOCKER_SMOKE_METRIC from Makefile.mk or skeleton default.
 
 File selection:
   --file PATH            Compare/sync this rendered path. Can be repeated.
   --list-files           Print the default managed file list and exit.
 
 Default managed files:
-  exporter.mk
+  Makefile.mk
   .dockerignore
   .github/dependabot.yml
   .github/workflows/ci.yml
@@ -56,7 +56,7 @@ Default managed files:
 
 Makefiles often contain domain-specific smoke-test commands in concrete
 exporters. Inspect target logic with --file Makefile and port relevant hunks
-manually. Common make variables live in exporter.mk and are scaffold-managed.
+manually. Common make variables live in Makefile.mk and are scaffold-managed.
 Dockerfiles can also be domain-specific when exporters need runtime packages.
 Legacy exporters may still define Main(), FeatureName(), or
 DefaultListenAddress() in internal/exporter/feature.go, or keep rendered
@@ -94,7 +94,7 @@ docker_smoke_metric=""
 custom_files=()
 
 default_files=(
-  "exporter.mk"
+  "Makefile.mk"
   ".dockerignore"
   ".github/dependabot.yml"
   ".github/workflows/ci.yml"
@@ -210,7 +210,7 @@ detect_module() {
 
 detect_project_name() {
   local file value
-  for file in "$target_dir/exporter.mk" "$target_dir/Makefile"; do
+  for file in "$target_dir/Makefile.mk" "$target_dir/Makefile"; do
     [[ -f "$file" ]] || continue
     value="$(awk -F '\\?=' '
       /^[[:space:]]*PROJECT_NAME[[:space:]]*\?=/ {
@@ -260,7 +260,7 @@ detect_readme_h1() {
 detect_exporter_description() {
   local dir="$target_dir/internal/exporter"
   local file value
-  for file in "$target_dir/exporter.mk" "$target_dir/Makefile"; do
+  for file in "$target_dir/Makefile.mk" "$target_dir/Makefile"; do
     [[ -f "$file" ]] || continue
     value="$(awk -F '\\?=' '
       /^[[:space:]]*PROJECT_DESC[[:space:]]*\?=/ {
@@ -304,7 +304,7 @@ detect_exporter_description() {
 detect_feature_name() {
   local dir="$target_dir/internal/exporter"
   local file value
-  for file in "$target_dir/exporter.mk" "$target_dir/Makefile"; do
+  for file in "$target_dir/Makefile.mk" "$target_dir/Makefile"; do
     [[ -f "$file" ]] || continue
     value="$(awk -F '\\?=' '
       /^[[:space:]]*FEATURE_NAME[[:space:]]*\?=/ {
@@ -364,7 +364,7 @@ detect_feature_name() {
 detect_default_port() {
   local dir="$target_dir/internal/exporter"
   local file value
-  for file in "$target_dir/exporter.mk" "$target_dir/Makefile"; do
+  for file in "$target_dir/Makefile.mk" "$target_dir/Makefile"; do
     [[ -f "$file" ]] || continue
     value="$(awk -F '\\?=' '
       /^[[:space:]]*DEFAULT_PORT[[:space:]]*\?=/ {
@@ -439,7 +439,7 @@ derive_namespace_from_project() {
 detect_namespace() {
   local match=""
   local file value
-  for file in "$target_dir/exporter.mk" "$target_dir/Makefile"; do
+  for file in "$target_dir/Makefile.mk" "$target_dir/Makefile"; do
     [[ -f "$file" ]] || continue
     value="$(awk -F '\\?=' '
       /^[[:space:]]*METRIC_NAMESPACE[[:space:]]*\?=/ {
@@ -473,7 +473,7 @@ detect_namespace() {
 }
 
 detect_docker_smoke_metric() {
-  [[ -f "$target_dir/exporter.mk" ]] || return 0
+  [[ -f "$target_dir/Makefile.mk" ]] || return 0
   awk -F '\\?=' '
     /^[[:space:]]*DOCKER_SMOKE_METRIC[[:space:]]*\?=/ {
       value = $2
@@ -482,7 +482,7 @@ detect_docker_smoke_metric() {
       print value
       exit
     }
-  ' "$target_dir/exporter.mk"
+  ' "$target_dir/Makefile.mk"
 }
 
 feature_go_defines() {
@@ -814,6 +814,23 @@ trap 'rm -rf "$rendered_dir"' EXIT
   --port "$default_port" \
   --docker-smoke-metric "$docker_smoke_metric" \
   --target-dir "$rendered_dir" >/dev/null
+
+format_rendered_go() {
+  local gofmt_bin="${GOFMT:-gofmt}"
+  if ! command -v "$gofmt_bin" >/dev/null 2>&1; then
+    if [[ -x "$HOME/sdk/go1.26.3/bin/gofmt" ]]; then
+      gofmt_bin="$HOME/sdk/go1.26.3/bin/gofmt"
+    else
+      return 0
+    fi
+  fi
+
+  while IFS= read -r file; do
+    "$gofmt_bin" -w "$file"
+  done < <(find "$rendered_dir" -type f -name '*.go' -print 2>/dev/null | sort)
+}
+
+format_rendered_go
 
 printf 'Scaffold metadata:\n'
 printf '  target:       %s\n' "$target_dir"

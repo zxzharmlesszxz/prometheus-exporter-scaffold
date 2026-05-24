@@ -1,4 +1,4 @@
-include exporter.mk
+include Makefile.mk
 
 .PHONY: help build release release-archives release-checksums release-smoke docker-build docker-buildx docker-buildx-push docker-push fmt fmt-check vet staticcheck test test-race coverage coverage-check smoke promtool-check compose compose-up compose-down compose-logs compose-config examples-check docker-smoke-build docker-smoke-image docker-smoke go-check check full-check clean
 
@@ -127,19 +127,12 @@ promtool-check: ## Validate Prometheus example config and rules.
 	$(DOCKER) run --rm --entrypoint promtool -v "$(CURDIR)/examples/prometheus:/etc/prometheus:ro" $(PROMTOOL_IMAGE) check config /etc/prometheus/prometheus.yml
 	$(DOCKER) run --rm --entrypoint sh -v "$(CURDIR)/examples/prometheus:/etc/prometheus:ro" $(PROMTOOL_IMAGE) -c 'promtool check rules /etc/prometheus/rules/*.yml'
 
-compose: ## Run Docker Compose with exporter.mk variables. Override COMPOSE_ARGS as needed.
+compose: ## Run Docker Compose with Makefile.mk variables. Override COMPOSE_ARGS as needed.
 	COMPOSE_PROJECT_NAME="$(COMPOSE_PROJECT_NAME)" \
 	PROJECT_NAME="$(PROJECT_NAME)" \
 	PROJECT_DESC="$(PROJECT_DESC)" \
 	FEATURE_NAME="$(FEATURE_NAME)" \
-	METRIC_NAMESPACE="$(METRIC_NAMESPACE)" \
-	DEFAULT_PORT="$(DEFAULT_PORT)" \
 	COMPOSE_EXPORTER_PORT="$(COMPOSE_EXPORTER_PORT)" \
-	VERSION="$(VERSION)" \
-	BRANCH="$(BRANCH)" \
-	REVISION="$(REVISION)" \
-	BUILD_USER="$(BUILD_USER)" \
-	BUILD_DATE="$(BUILD_DATE)" \
 	LDFLAGS="$(LDFLAGS)" \
 	$(DOCKER_COMPOSE) $(COMPOSE_ARGS)
 
@@ -160,16 +153,16 @@ examples-check: promtool-check compose-config ## Validate shipped Prometheus and
 docker-smoke-build: ## Build the Docker image used by docker-smoke.
 	$(MAKE) docker-build \
 		DOCKER_IMAGE=$(SMOKE_DOCKER_IMAGE) \
-		LDFLAGS=$(SMOKE_LDFLAGS)
+		LDFLAGS="$(SMOKE_LDFLAGS)"
 
 docker-smoke-image: ## Smoke-test an already built Docker image.
 	@help_output="$$( $(DOCKER) run --rm $(DOCKER_IMAGE) --help 2>&1 )"; \
 	echo "$$help_output" | grep -F "usage: $(DOCKER_ENTRYPOINT_NAME) [<flags>]" >/dev/null || { echo "$$help_output"; exit 1; }
 	@version_output="$$( $(DOCKER) run --rm $(DOCKER_IMAGE) --version 2>&1 )"; \
 	echo "$$version_output"; \
-	echo "$$version_output" | grep -F "$(VERSION)" >/dev/null; \
-	echo "$$version_output" | grep -F "$(BRANCH)" >/dev/null; \
-	echo "$$version_output" | grep -F "$(REVISION)" >/dev/null
+	echo "$$version_output" | grep -F "$(DOCKER_SMOKE_EXPECTED_VERSION)" >/dev/null; \
+	echo "$$version_output" | grep -F "$(DOCKER_SMOKE_EXPECTED_BRANCH)" >/dev/null; \
+	echo "$$version_output" | grep -F "$(DOCKER_SMOKE_EXPECTED_REVISION)" >/dev/null
 	@cid="$$( $(DOCKER) run -d --rm $(DOCKER_IMAGE) --log.level=error --web.listen-address=:9900 --$(FEATURE_NAME).refresh-interval=100ms )"; \
 	trap "$(DOCKER) rm -f $$cid >/dev/null 2>&1 || true" EXIT; \
 	i=0; \
@@ -200,16 +193,18 @@ docker-smoke-image: ## Smoke-test an already built Docker image.
 		sleep 1; \
 	done; \
 	echo "$$metrics" | grep -F "$(METRIC_NAMESPACE)_build_info" >/dev/null; \
-	echo "$$metrics" | grep -F 'version="$(VERSION)"' >/dev/null; \
-	echo "$$metrics" | grep -F 'branch="$(BRANCH)"' >/dev/null; \
-	echo "$$metrics" | grep -F 'revision="$(REVISION)"' >/dev/null; \
+	echo "$$metrics" | grep -F 'version="$(DOCKER_SMOKE_EXPECTED_VERSION)"' >/dev/null; \
+	echo "$$metrics" | grep -F 'branch="$(DOCKER_SMOKE_EXPECTED_BRANCH)"' >/dev/null; \
+	echo "$$metrics" | grep -F 'revision="$(DOCKER_SMOKE_EXPECTED_REVISION)"' >/dev/null; \
 	echo "$$metrics" | grep -F -- '$(DOCKER_SMOKE_METRIC)' >/dev/null; \
 	$(DOCKER) rm -f "$$cid" >/dev/null 2>&1 || true
 
 docker-smoke: docker-smoke-build ## Build and smoke-test the Docker image.
 	$(MAKE) docker-smoke-image \
 		DOCKER_IMAGE=$(SMOKE_DOCKER_IMAGE) \
-		LDFLAGS=$(SMOKE_LDFLAGS)
+		DOCKER_SMOKE_EXPECTED_VERSION="$(SMOKE_VERSION)" \
+		DOCKER_SMOKE_EXPECTED_BRANCH="$(SMOKE_BRANCH)" \
+		DOCKER_SMOKE_EXPECTED_REVISION="$(SMOKE_REVISION)"
 
 go-check: fmt-check vet staticcheck coverage-check smoke test-race ## Run Go checks that do not require Docker.
 
