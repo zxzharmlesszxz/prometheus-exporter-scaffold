@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export LC_ALL=C
 
 usage() {
   cat <<'USAGE'
@@ -41,10 +42,16 @@ Default managed files:
   .gitlab-ci.yml
   cmd/main.go
   internal/exporter/defaults.go
+  internal/exporter/feature.go
+  internal/exporter/feature_collectors.go
+  internal/exporter/feature_flags.go
   internal/exporter/identity.go
+  internal/exporter/info.go
+  internal/exporter/info_test.go
   internal/exporter/main.go
+  internal/exporter/runtime_config.go
   internal/exporter/standard_metrics.go
-  internal/exporter/variables/variables.go
+  smoke/binary_test.go
 
 Makefiles often contain domain-specific smoke-test commands in concrete
 exporters. Inspect target logic with --file Makefile and port relevant hunks
@@ -55,24 +62,12 @@ DefaultListenAddress() in internal/exporter/feature.go, or keep rendered
 defaults in older files. Remove those definitions once when adopting the split
 scaffold Go files.
 Metric constants are split so scaffold-owned standard names live in
-internal/exporter/standard_metrics.go. Domain-specific metric constants should
-remain in internal/exporter/metrics.go.
-Collector types are domain-specific; inspect split collector type drift with
---file internal/exporter/collector_types.go before migrating manually.
-Collector metric descriptors and emission are domain-specific; inspect split
-collector metric method drift with --file internal/exporter/collector_metrics.go.
-Snapshot gatherers and snapshot status/error adapters are also domain-specific;
-inspect them with --file internal/exporter/snapshot.go.
-Feature flags, collector registration, and runtime config are domain-specific;
-inspect split feature method drift with --file internal/exporter/feature_flags.go,
---file internal/exporter/feature_collectors.go, or
---file internal/exporter/runtime_config.go.
-Collector test helpers can be inspected with
---file internal/exporter/collector_test_helpers_test.go.
-Collector tests can be inspected by concern with
---file internal/exporter/collector_snapshot_test.go,
---file internal/exporter/collector_refresh_test.go, or
---file internal/exporter/collector_defaults_test.go.
+internal/exporter/standard_metrics.go. Domain-specific metric constants,
+collector construction, snapshots, and collector tests should live outside the
+adapter package, normally under internal/<feature-name>.
+Inspect the placeholder domain skeleton with concrete rendered paths such as
+--file internal/demo/exporter.go or --file internal/domain/collector.go; these
+files are intentionally not part of the default managed set.
 Feature test helpers can be inspected with
 --file internal/exporter/feature_test_helpers_test.go and
 --file internal/exporter/feature_integration_test_helpers_test.go.
@@ -105,10 +100,16 @@ default_files=(
   ".gitlab-ci.yml"
   "cmd/main.go"
   "internal/exporter/defaults.go"
+  "internal/exporter/feature.go"
+  "internal/exporter/feature_collectors.go"
+  "internal/exporter/feature_flags.go"
   "internal/exporter/identity.go"
+  "internal/exporter/info.go"
+  "internal/exporter/info_test.go"
   "internal/exporter/main.go"
+  "internal/exporter/runtime_config.go"
   "internal/exporter/standard_metrics.go"
-  "internal/exporter/variables/variables.go"
+  "smoke/binary_test.go"
 )
 
 while [[ $# -gt 0 ]]; do
@@ -226,6 +227,13 @@ detect_project_name() {
   if [[ -d "$target_dir/internal/exporter" ]]; then
     while IFS= read -r file; do
       value="$(awk '
+        /ExporterName[[:space:]]*=/ && /"/ {
+          line = $0
+          sub(/^.*ExporterName[[:space:]]*=[[:space:]]*"/, "", line)
+          sub(/".*$/, "", line)
+          print line
+          exit
+        }
         /DefaultExporterName[[:space:]]*=/ && /"/ {
           line = $0
           sub(/^.*DefaultExporterName[[:space:]]*=[[:space:]]*"/, "", line)
@@ -250,9 +258,32 @@ detect_readme_h1() {
 detect_exporter_description() {
   local dir="$target_dir/internal/exporter"
   local file value
+  for file in "$target_dir/exporter.mk" "$target_dir/Makefile"; do
+    [[ -f "$file" ]] || continue
+    value="$(awk -F '\\?=' '
+      /^[[:space:]]*PROJECT_DESC[[:space:]]*\?=/ {
+        value = $2
+        sub(/^[[:space:]]*/, "", value)
+        sub(/[[:space:]]*$/, "", value)
+        print value
+        exit
+      }
+    ' "$file")"
+    if [[ -n "$value" && "$value" != *'$('* ]]; then
+      printf '%s' "$value"
+      return 0
+    fi
+  done
   [[ -d "$dir" ]] || return 0
   while IFS= read -r file; do
     value="$(awk '
+      /ExporterDescription[[:space:]]*=/ && /"/ {
+        line = $0
+        sub(/^.*ExporterDescription[[:space:]]*=[[:space:]]*"/, "", line)
+        sub(/".*$/, "", line)
+        print line
+        exit
+      }
       /DefaultExporterDescription[[:space:]]*=/ && /"/ {
         line = $0
         sub(/^.*DefaultExporterDescription[[:space:]]*=[[:space:]]*"/, "", line)
@@ -271,6 +302,22 @@ detect_exporter_description() {
 detect_feature_name() {
   local dir="$target_dir/internal/exporter"
   local file value
+  for file in "$target_dir/exporter.mk" "$target_dir/Makefile"; do
+    [[ -f "$file" ]] || continue
+    value="$(awk -F '\\?=' '
+      /^[[:space:]]*FEATURE_NAME[[:space:]]*\?=/ {
+        value = $2
+        sub(/^[[:space:]]*/, "", value)
+        sub(/[[:space:]]*$/, "", value)
+        print value
+        exit
+      }
+    ' "$file")"
+    if [[ -n "$value" && "$value" != *'$('* ]]; then
+      printf '%s' "$value"
+      return 0
+    fi
+  done
   [[ -d "$dir" ]] || return 0
   while IFS= read -r file; do
     value="$(awk '
@@ -284,6 +331,13 @@ detect_feature_name() {
       /DefaultFeatureName[[:space:]]*=/ && /"/ {
         line = $0
         sub(/^.*DefaultFeatureName[[:space:]]*=[[:space:]]*"/, "", line)
+        sub(/".*$/, "", line)
+        print line
+        exit
+      }
+      /FeatureName[[:space:]]*=/ && /"/ {
+        line = $0
+        sub(/^.*FeatureName[[:space:]]*=[[:space:]]*"/, "", line)
         sub(/".*$/, "", line)
         print line
         exit
@@ -308,9 +362,33 @@ detect_feature_name() {
 detect_default_port() {
   local dir="$target_dir/internal/exporter"
   local file value
+  for file in "$target_dir/exporter.mk" "$target_dir/Makefile"; do
+    [[ -f "$file" ]] || continue
+    value="$(awk -F '\\?=' '
+      /^[[:space:]]*DEFAULT_PORT[[:space:]]*\?=/ {
+        value = $2
+        sub(/^[[:space:]]*/, "", value)
+        sub(/[[:space:]]*$/, "", value)
+        sub(/^:/, "", value)
+        print value
+        exit
+      }
+    ' "$file")"
+    if [[ -n "$value" && "$value" != *'$('* ]]; then
+      printf '%s' "$value"
+      return 0
+    fi
+  done
   [[ -d "$dir" ]] || return 0
   while IFS= read -r file; do
     value="$(awk '
+      /ListenAddress[[:space:]]*=/ && /":[0-9]+"/ {
+        line = $0
+        sub(/^.*:"?/, "", line)
+        sub(/".*$/, "", line)
+        print line
+        exit
+      }
       /defaultListenAddress[[:space:]]*=/ && /":[0-9]+"/ {
         line = $0
         sub(/^.*:"?/, "", line)
@@ -358,9 +436,27 @@ derive_namespace_from_project() {
 
 detect_namespace() {
   local match=""
+  local file value
+  for file in "$target_dir/exporter.mk" "$target_dir/Makefile"; do
+    [[ -f "$file" ]] || continue
+    value="$(awk -F '\\?=' '
+      /^[[:space:]]*METRIC_NAMESPACE[[:space:]]*\?=/ {
+        value = $2
+        sub(/^[[:space:]]*/, "", value)
+        sub(/[[:space:]]*$/, "", value)
+        print value
+        exit
+      }
+    ' "$file")"
+    if [[ -n "$value" && "$value" != *'$('* ]]; then
+      printf '%s' "$value"
+      return 0
+    fi
+  done
   if [[ -d "$target_dir/internal/exporter" ]]; then
     match="$(find "$target_dir/internal/exporter" -type f -name '*.go' -print 2>/dev/null | sort | while IFS= read -r file; do
       sed -n \
+        -e 's/.*MetricNamespace[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' \
         -e 's/.*DefaultMetricNamespace[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' \
         -e 's/.*defaultMetricNamespace[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' \
         -e 's/.*Namespace:[[:space:]]*"\([^"]*\)".*/\1/p' \
@@ -743,15 +839,15 @@ for file in "${managed_files[@]}"; do
   rendered_file="$rendered_dir/$file"
   target_file="$target_dir/$file"
 
-  if [[ ! -e "$rendered_file" ]]; then
-    echo "SKIP    $file (not rendered)"
-    continue
-  fi
-
   legacy_reason="$(legacy_managed_go_reason "$file" || true)"
   if [[ -n "$legacy_reason" ]]; then
     echo "LEGACY $file ($legacy_reason; migrate before syncing this file)"
     drift=1
+    continue
+  fi
+
+  if [[ ! -e "$rendered_file" ]]; then
+    echo "SKIP    $file (not rendered)"
     continue
   fi
 

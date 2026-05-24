@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/alecthomas/kingpin/v2"
+	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/exportertest"
 )
 
 func TestFeatureRegistersAndParsesFlags(t *testing.T) {
@@ -18,7 +19,8 @@ func TestFeatureRegistersAndParsesFlags(t *testing.T) {
 	if _, err := app.Parse([]string{"--" + defaultFeatureName + ".refresh-interval=30s"}); err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
-	if feature.refreshInterval != 30*time.Second {
-		t.Fatalf("refreshInterval = %v, want %v", feature.refreshInterval, 30*time.Second)
+	config := feature.RuntimeConfig()
+	if got := exportertest.RuntimeConfigValue(t, config, "refresh_interval"); got != 30*time.Second {
+		t.Fatalf("refresh_interval = %v, want %v", got, 30*time.Second)
 	}
 }

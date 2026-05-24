@@ -1,4 +1,4 @@
-package exporter
+package __FEATURE_NAME__
 
 import (
 	"time"
@@ -19,5 +19,6 @@ type SnapshotGatherer struct{}
 type Collector struct {
 	*framework.SnapshotCollector[Snapshot]
 
+	featureName      string
 	exampleValueDesc *prometheus.Desc
 }

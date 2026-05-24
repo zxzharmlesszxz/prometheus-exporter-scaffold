@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export LC_ALL=C
 
 usage() {
   cat <<'USAGE'
@@ -166,6 +167,11 @@ done
 
 find "$target_dir" -depth -name '*__PROJECT_NAME__*' -print | while IFS= read -r path; do
   new_path="${path//__PROJECT_NAME__/$project_name}"
+  mv "$path" "$new_path"
+done
+
+find "$target_dir" -depth -name '*__FEATURE_NAME__*' -print | while IFS= read -r path; do
+  new_path="${path//__FEATURE_NAME__/$feature_name}"
   mv "$path" "$new_path"
 done
 

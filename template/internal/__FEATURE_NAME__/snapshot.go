@@ -1,4 +1,4 @@
-package exporter
+package __FEATURE_NAME__
 
 import (
 	"context"
@@ -23,8 +23,8 @@ func snapshotStatus(snapshot Snapshot) framework.SnapshotStatus {
 	}
 }
 
-func logSnapshotError(logger *slog.Logger, snapshot Snapshot) {
+func (c *Collector) logSnapshotError(logger *slog.Logger, snapshot Snapshot) {
 	if snapshot.Err != nil {
-		logger.Error(defaultFeatureName+" data collection failed", "err", snapshot.Err)
+		logger.Error(c.featureName+" data collection failed", "err", snapshot.Err)
 	}
 }

@@ -72,13 +72,13 @@ staticcheck: ## Run staticcheck.
 	GOFLAGS="$(strip $(GOFLAGS) $(STATICCHECK_GOFLAGS))" $(STATICCHECK) ./...
 
 test: ## Run Go tests.
-	$(GO) test ./...
+	$(GO) test -ldflags "$(LDFLAGS)" ./...
 
 test-race: ## Run Go tests with the race detector.
-	CGO_ENABLED=1 $(GO) test -race ./...
+	CGO_ENABLED=1 $(GO) test -race -ldflags "$(LDFLAGS)" ./...
 
 coverage: ## Run tests with coverage and write coverage reports.
-	$(GO) test ./... -covermode=atomic -coverprofile=$(COVERAGE_PROFILE)
+	$(GO) test -ldflags "$(LDFLAGS)" -covermode=atomic -coverprofile=$(COVERAGE_PROFILE) ./...
 	$(GO) tool cover -func=$(COVERAGE_PROFILE) | tee $(COVERAGE_REPORT)
 
 coverage-check: coverage ## Enforce the coverage threshold.
@@ -92,15 +92,13 @@ coverage-check: coverage ## Enforce the coverage threshold.
 	}'
 
 smoke: ## Build and smoke-test the local binary.
-	RUN_BINARY_SMOKE=1 GO="$(GO)" $(GO) test ./smoke -run TestBinarySmoke -count=1
+	mkdir -p $(DIST_DIR)
+	CGO_ENABLED=$(CGO_ENABLED) $(GO) build -trimpath -ldflags "$(SMOKE_LDFLAGS)" -o $(SMOKE_BINARY) $(MAIN_PACKAGE)
+	RUN_BINARY_SMOKE=1 GO="$(GO)" EXPORTER_SMOKE_BINARY="$(SMOKE_BINARY)" $(GO) test -ldflags "$(SMOKE_LDFLAGS)" ./smoke -run TestBinarySmoke -count=1
 
 docker-build: ## Build the Docker image.
 	$(DOCKER) build \
-		--build-arg VERSION=$(VERSION) \
-		--build-arg BRANCH=$(BRANCH) \
-		--build-arg REVISION=$(REVISION) \
-		--build-arg BUILD_USER=$(BUILD_USER) \
-		--build-arg BUILD_DATE=$(BUILD_DATE) \
+		--build-arg LDFLAGS="$(LDFLAGS)" \
 		--build-arg PROJECT_NAME=$(PROJECT_NAME) \
 		-t $(DOCKER_IMAGE) \
 		.
@@ -108,11 +106,7 @@ docker-build: ## Build the Docker image.
 docker-buildx: ## Build a multi-platform Docker image with buildx.
 	$(DOCKER) buildx build \
 		--platform $(DOCKER_PLATFORMS) \
-		--build-arg VERSION=$(VERSION) \
-		--build-arg BRANCH=$(BRANCH) \
-		--build-arg REVISION=$(REVISION) \
-		--build-arg BUILD_USER=$(BUILD_USER) \
-		--build-arg BUILD_DATE=$(BUILD_DATE) \
+		--build-arg LDFLAGS="$(LDFLAGS)" \
 		--build-arg PROJECT_NAME=$(PROJECT_NAME) \
 		-t $(DOCKER_IMAGE) \
 		.
@@ -121,11 +115,7 @@ docker-buildx-push: ## Build and push a multi-platform Docker image with buildx.
 	$(DOCKER) buildx build \
 		--push \
 		--platform $(DOCKER_PLATFORMS) \
-		--build-arg VERSION=$(VERSION) \
-		--build-arg BRANCH=$(BRANCH) \
-		--build-arg REVISION=$(REVISION) \
-		--build-arg BUILD_USER=$(BUILD_USER) \
-		--build-arg BUILD_DATE=$(BUILD_DATE) \
+		--build-arg LDFLAGS="$(LDFLAGS)" \
 		--build-arg PROJECT_NAME=$(PROJECT_NAME) \
 		-t $(DOCKER_IMAGE) \
 		.
@@ -145,11 +135,7 @@ examples-check: promtool-check compose-config ## Validate shipped Prometheus and
 docker-smoke-build: ## Build the Docker image used by docker-smoke.
 	$(MAKE) docker-build \
 		DOCKER_IMAGE=$(SMOKE_DOCKER_IMAGE) \
-		VERSION=$(SMOKE_VERSION) \
-		BRANCH=$(SMOKE_BRANCH) \
-		REVISION=$(SMOKE_REVISION) \
-		BUILD_USER=$(SMOKE_BUILD_USER) \
-		BUILD_DATE=$(SMOKE_BUILD_DATE)
+		LDFLAGS=$(SMOKE_LDFLAGS)
 
 docker-smoke-image: ## Smoke-test an already built Docker image.
 	@help_output="$$( $(DOCKER) run --rm $(DOCKER_IMAGE) --help 2>&1 )"; \
@@ -198,9 +184,7 @@ docker-smoke-image: ## Smoke-test an already built Docker image.
 docker-smoke: docker-smoke-build ## Build and smoke-test the Docker image.
 	$(MAKE) docker-smoke-image \
 		DOCKER_IMAGE=$(SMOKE_DOCKER_IMAGE) \
-		VERSION=$(SMOKE_VERSION) \
-		BRANCH=$(SMOKE_BRANCH) \
-		REVISION=$(SMOKE_REVISION)
+		LDFLAGS=$(SMOKE_LDFLAGS)
 
 go-check: fmt-check vet staticcheck coverage-check smoke test-race ## Run Go checks that do not require Docker.
 

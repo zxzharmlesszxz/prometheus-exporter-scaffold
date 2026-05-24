@@ -1,4 +1,4 @@
-package exporter
+package __FEATURE_NAME__
 
 import (
 	"time"

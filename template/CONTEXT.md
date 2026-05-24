@@ -5,7 +5,7 @@ This repository is `__PROJECT_NAME__`.
 It was rendered from `prometheus-exporter-scaffold` and uses the framework:
 
 ```go
-github.com/zxzharmlesszxz/prometheus-exporter-framework v0.1.4
+github.com/zxzharmlesszxz/prometheus-exporter-framework v0.2.0
 ```
 
 Local Go tooling in the original workspace is expected at:
@@ -27,7 +27,8 @@ PATH=/Users/mort/sdk/go1.26.3/bin:$PATH
 - build info, Go runtime, and process collectors
 - typed snapshot cache and background refresh collector helper
 - `exporter/exportertest` helpers for collector tests
-- `exporter/exportertest/smoketest` for binary smoke tests
+- `exporter/exportertest/smoketest` for binary smoke tests, including
+  `smoketest.Config.BinaryPath` for Makefile-built binaries
 - version metadata hydration from linker flags or Go build info
 
 ## Current Exporter State
@@ -83,49 +84,59 @@ Default refresh interval:
 ## Generated Domain Skeleton
 
 - `internal/exporter/feature.go`
-  - feature defaults, state, and constructor
+  - stable adapter constructor delegating to `internal/__FEATURE_NAME__`
 - `internal/exporter/feature_flags.go`
-  - feature flag registration
+  - stable adapter flag delegation
 - `internal/exporter/feature_collectors.go`
-  - feature collector registration
+  - stable adapter collector registration delegation
 - `internal/exporter/runtime_config.go`
-  - feature runtime config reporting
+  - stable adapter runtime config delegation
 - `internal/exporter/main.go`
   - stable `Main()` framework bootstrap
 - `internal/exporter/identity.go`
   - stable `FeatureName()` and `DefaultListenAddress()` methods
-- `internal/exporter/variables/variables.go`
-  - rendered exporter name, description, feature name, metric namespace, and
-    default listen address
 - `internal/exporter/defaults.go`
-  - package-local aliases for rendered exporter values
+  - Makefile-injected linker vars for exporter name, description, feature name,
+    metric namespace, and default listen address
 - `internal/exporter/standard_metrics.go`
   - build-info metric and standard collection status metric constants
-- `internal/exporter/metrics.go`
+- `internal/exporter/info.go`
+  - stable exporter metadata and binary smoke configuration type
+- `internal/exporter/info_test.go`
+  - stable checks for common exporter metadata and smoke configuration
+- `internal/exporter/feature_flags_test.go`,
+  `feature_collectors_test.go`, `runtime_config_test.go`, and
+  `identity_test.go`
+  - stable adapter tests by concern
+- `internal/exporter/feature_test_helpers_test.go` and
+  `feature_integration_test_helpers_test.go`
+  - stable adapter test helpers
+- `internal/__FEATURE_NAME__/exporter.go`
+  - placeholder domain flags, runtime config, and collector registration
+- `internal/__FEATURE_NAME__/metrics.go`
   - placeholder domain/example metric constants
-- `internal/exporter/collector.go`
+- `internal/__FEATURE_NAME__/smoke.go`
+  - placeholder domain smoke additions consumed by `internal/exporter/info.go`
+- `internal/__FEATURE_NAME__/collector.go`
   - snapshot-backed placeholder collector
   - example metric descriptor
   - common collection status metrics through the framework
-- `internal/exporter/collector_metrics.go`
+- `internal/__FEATURE_NAME__/collector_metrics.go`
   - placeholder metric description and emission methods
-- `internal/exporter/collector_types.go`
+- `internal/__FEATURE_NAME__/collector_types.go`
   - placeholder collector, snapshot, and snapshot gatherer type declarations
-- `internal/exporter/snapshot.go`
+- `internal/__FEATURE_NAME__/snapshot.go`
   - placeholder snapshot gathering plus snapshot status/error adapters
-- `internal/exporter/*_test.go`
-  - collector and feature tests
+- `internal/__FEATURE_NAME__/*_test.go`
+  - collector and placeholder domain exporter tests
   - split collector tests by concern in `collector_snapshot_test.go`,
     `collector_refresh_test.go`, and `collector_defaults_test.go`
-  - split feature tests by concern in `feature_flags_test.go`,
-    `feature_collectors_test.go`, `runtime_config_test.go`, and
-    `identity_test.go`
   - split collector test helper in `collector_test_helpers_test.go`
-  - split feature test helpers in `feature_test_helpers_test.go` and
-    `feature_integration_test_helpers_test.go`
+  - placeholder domain exporter tests in `exporter_test.go`
 - `smoke/binary_test.go`
   - short `smoketest.Config`-based binary smoke test
-  - imports `internal/exporter/variables` for rendered exporter identity values
+  - imports `internal/exporter` and passes `ExporterInfo()` into the framework
+    smoke helper
 
 When turning this into a real exporter, replace placeholder domain logic and
 examples while keeping the stable framework wiring.
@@ -143,6 +154,10 @@ make full-check
 `make go-check` runs formatting, vet, staticcheck, coverage threshold, binary
 smoke, and race tests.
 
+Use Make targets for Go builds/tests that import `internal/exporter`; raw
+`go run ./cmd`, `go build ./cmd`, and `go test ./...` do not inject exporter
+metadata and are intentionally unsupported.
+
 `make check` also validates Prometheus and Docker Compose examples.
 
 `make full-check` adds Docker smoke and release smoke.
@@ -158,6 +173,20 @@ exporter.mk
 `Makefile` includes `exporter.mk` and keeps target logic only. Existing
 exporters may customize target bodies, especially Docker smoke checks, while
 keeping `exporter.mk` scaffold-managed.
+
+`PROJECT_NAME` is rendered to `__PROJECT_NAME__`; do not derive it from the
+temporary render directory. `SMOKE_BINARY` defaults to `$(DIST_DIR)/$(PROJECT_NAME)`
+so CLI usage based on executable basename still matches `ExporterInfo().Name`.
+
+`exporter.mk` owns metadata linker flags. `LDFLAGS` and `SMOKE_LDFLAGS` inject:
+
+```text
+internal/exporter.defaultExporterName
+internal/exporter.defaultExporterDescription
+internal/exporter.defaultFeatureName
+internal/exporter.defaultMetricNamespace
+internal/exporter.defaultListenAddress
+```
 
 Docker smoke has one exporter-specific assertion controlled by:
 
@@ -186,7 +215,7 @@ even though local/release binaries use the project executable file name.
 
 ## Known Pending Work From Scaffold
 
-- If `prometheus-exporter-framework v0.1.4` is not published yet, add a temporary
+- If `prometheus-exporter-framework v0.2.0` is not published yet, add a temporary
   local replace before running Go checks:
 
   ```go
@@ -206,6 +235,31 @@ make -n docker-build
 ```
 
 The previous line-continuation issue in Docker targets is fixed.
+
+On 2026-05-22 the scaffold template moved placeholder collector and snapshot
+logic out of `internal/exporter` into `internal/__FEATURE_NAME__`. After render,
+that path becomes the concrete domain package, for example `internal/demo` or
+`internal/domain`. `internal/exporter` should stay a stable framework adapter
+that delegates feature flags, collector registration, and runtime config to the
+domain package.
+
+On 2026-05-22 `internal/exporter/feature_integration_test.go` was changed to
+derive expected metrics from `ExporterInfo()`: build-info comes from
+`info.Metrics.BuildInfo`, and exporter-specific expectations come from
+`info.Smoke.WantMetrics`. The placeholder example metric is added by
+`internal/__FEATURE_NAME__/smoke.go`, so real exporters can keep those domain
+smoke variables empty and keep the integration test scaffold-identical.
+
+On 2026-05-22 exporter metadata moved to Makefile-only linker injection.
+`internal/exporter/defaults.go` has empty string vars and fails fast during
+package init when a supported Make target does not inject them. `make test`,
+`make coverage`, `make test-race`, and `make smoke` pass `-ldflags`.
+`make smoke` builds `$(SMOKE_BINARY)` first, then passes it through
+`EXPORTER_SMOKE_BINARY` to `smoketest.Config.BinaryPath`.
+
+A fresh rendered demo exporter was verified with a temporary local framework
+replace: placeholder scan, `make go-check COVERAGE_THRESHOLD=90.0`, and default
+scaffold drift passed with total coverage `92.7%`.
 
 ## Maintenance Rule
 

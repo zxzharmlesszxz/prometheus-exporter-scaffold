@@ -1,17 +1,15 @@
 package exporter
 
-import "time"
-
-const (
-	defaultRefreshInterval = time.Minute
-)
+import feature "__GO_MODULE__/internal/__FEATURE_NAME__"
 
 type Feature struct {
-	refreshInterval time.Duration
+	feature *feature.Exporter
 }
 
 func NewFeature() *Feature {
 	return &Feature{
-		refreshInterval: defaultRefreshInterval,
+		feature: feature.NewExporter(feature.ExporterOptions{
+			FeatureName: defaultFeatureName,
+		}),
 	}
 }

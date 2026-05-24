@@ -7,7 +7,8 @@ It is built as a thin exporter on top of `prometheus-exporter-framework`.
 ## Local Run
 
 ```bash
-go run ./cmd \
+make build
+./dist/__PROJECT_NAME__ \
   --web.listen-address=:__DEFAULT_PORT__
 ```
 
@@ -62,9 +63,7 @@ Endpoints:
 For a direct Docker build, run:
 
 ```bash
-docker build \
-  --build-arg PROJECT_NAME=__PROJECT_NAME__ \
-  -t __PROJECT_NAME__ .
+make docker-build
 ```
 
 ## Tests

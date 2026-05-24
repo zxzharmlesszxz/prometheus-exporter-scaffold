@@ -43,9 +43,9 @@ make check
 have defaults, but passing them explicitly keeps the generated repository
 predictable.
 
-The generated `cmd/main.go` is intentionally stable. Project metadata is derived
-by `prometheus-exporter-framework` from the Go module path, while the concrete
-feature package owns `exporter.Main()`.
+The generated `cmd/main.go` is intentionally stable. Project metadata is
+injected by Makefile linker flags from `exporter.mk`, while the concrete feature
+package owns domain behavior.
 
 ## Framework Version
 
@@ -74,30 +74,29 @@ scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --sync
 ```
 
 The default managed set is intentionally conservative: CI files, ignore files,
-`cmd/main.go`, and split scaffold-owned Go wiring under `internal/exporter`.
-Concrete exporters often customize `Makefile` Docker smoke commands,
-Dockerfiles, domain metric constants, and examples, so inspect those separately:
+`cmd/main.go`, and stable scaffold-owned Go wiring under `internal/exporter`.
+Concrete exporters keep domain logic in their rendered feature package, normally
+`internal/<feature-name>`, so inspect those files separately instead of blindly
+syncing them:
 
 ```bash
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file Makefile
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file Dockerfile
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/metrics.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/feature_flags.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/feature_collectors.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/runtime_config.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/feature_flags_test.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/feature_collectors_test.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/runtime_config_test.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/identity_test.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/feature_test_helpers_test.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/feature_integration_test_helpers_test.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/collector_types.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/collector_metrics.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/collector_test_helpers_test.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/collector_snapshot_test.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/collector_refresh_test.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/collector_defaults_test.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/snapshot.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/exporter.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/metrics.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/collector_types.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/collector_metrics.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/collector_test_helpers_test.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/collector_snapshot_test.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/collector_refresh_test.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/collector_defaults_test.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/snapshot.go
 ```
 
 Older exporters may still define `Main()`, `FeatureName()`, or

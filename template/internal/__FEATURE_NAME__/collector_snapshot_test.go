@@ -1,4 +1,4 @@
-package exporter
+package __FEATURE_NAME__
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ func TestCollectorExportsSnapshot(t *testing.T) {
 	t.Parallel()
 
 	now := time.Unix(1700000000, 0)
-	collector := newCollectorWithNow(defaultMetricNamespace, slog.New(slog.NewTextHandler(io.Discard, nil)), newFakeSnapshotter(Snapshot{
+	collector := newCollectorWithNow(defaultFeatureName, defaultMetricNamespace, slog.New(slog.NewTextHandler(io.Discard, nil)), newFakeSnapshotter(Snapshot{
 		AttemptTime: now,
 		Success:     true,
 		Value:       42,
@@ -34,10 +34,10 @@ func TestCollectorExportsSnapshot(t *testing.T) {
 # HELP %[4]s Unix timestamp of the last successful %[5]s data collection
 # TYPE %[4]s gauge
 %[4]s 1.7e+09
-`, metricExampleValue, metricLastCollectionSuccess, metricLastCollectionTimestampSeconds, metricLastSuccessfulCollectionTimestampSeconds, defaultFeatureName)
+`, metricExampleValue(defaultFeatureName), metricLastCollectionSuccess, metricLastCollectionTimestampSeconds, metricLastSuccessfulCollectionTimestampSeconds, defaultFeatureName)
 
 	if err := testutil.CollectAndCompare(collector, strings.NewReader(expected),
-		metricExampleValue,
+		metricExampleValue(defaultFeatureName),
 		metricLastCollectionSuccess,
 		metricLastCollectionTimestampSeconds,
 		metricLastSuccessfulCollectionTimestampSeconds,
