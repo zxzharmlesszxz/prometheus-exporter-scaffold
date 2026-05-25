@@ -4,54 +4,42 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
+	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/featurekit"
 )
+
+type Collector struct {
+	*framework.SnapshotCollector[Snapshot]
+
+	featureName string
+	metrics     Metrics
+}
 
 func NewCollector(featureName string, namespace string, logger *slog.Logger, snapshotter framework.Snapshotter[Snapshot], refreshInterval time.Duration) *Collector {
 	return newCollectorWithNow(featureName, namespace, logger, snapshotter, refreshInterval, nil)
 }
 
 func newCollectorWithNow(featureName string, namespace string, logger *slog.Logger, snapshotter framework.Snapshotter[Snapshot], refreshInterval time.Duration, now func() time.Time) *Collector {
-	if featureName == "" {
-		featureName = defaultFeatureName
-	}
-	if namespace == "" {
-		namespace = defaultMetricNamespace
-	}
-	if logger == nil {
-		logger = slog.Default()
-	}
-	if snapshotter == nil {
-		snapshotter = SnapshotGatherer{}
-	}
-	if refreshInterval <= 0 {
-		refreshInterval = DefaultRefreshInterval
-	}
-
-	collector := &Collector{
-		featureName: featureName,
-		exampleValueDesc: prometheus.NewDesc(
-			metricExampleValue(featureName),
-			"Example "+featureName+" metric emitted by the generated exporter skeleton",
-			nil,
-			nil,
-		),
-	}
-	collector.SnapshotCollector = framework.NewSnapshotCollector(framework.SnapshotCollectorOptions[Snapshot]{
-		Namespace:       namespace,
-		Logger:          logger,
-		Snapshotter:     snapshotter,
-		RefreshInterval: refreshInterval,
-		StatusFunc:      snapshotStatus,
-		DescribeFunc:    collector.describeSnapshotMetrics,
-		CollectFunc:     collector.collectSnapshotMetrics,
-		ErrorLogFunc:    collector.logSnapshotError,
-		Now:             now,
-
-		LastCollectionSuccessHelp:    "Whether the last " + featureName + " data collection succeeded",
-		LastCollectionTimestampHelp:  "Unix timestamp of the last " + featureName + " data collection attempt",
-		LastSuccessfulCollectionHelp: "Unix timestamp of the last successful " + featureName + " data collection",
+	options := featurekit.ResolveSnapshotCollectorOptions(featurekit.SnapshotCollectorOptions[Snapshot]{
+		FeatureName:            featureName,
+		DefaultFeatureName:     defaultFeatureName,
+		Namespace:              namespace,
+		DefaultMetricNamespace: defaultMetricNamespace,
+		Logger:                 logger,
+		Snapshotter:            snapshotter,
+		DefaultSnapshotter:     SnapshotGatherer{},
+		RefreshInterval:        refreshInterval,
+		DefaultRefreshInterval: DefaultRefreshInterval,
+		StatusFunc:             snapshotStatus,
+		Now:                    now,
 	})
+	collector := &Collector{
+		featureName: options.FeatureName,
+		metrics:     newMetrics(options.FeatureName),
+	}
+	options.DescribeFunc = collector.describeSnapshotMetrics
+	options.CollectFunc = collector.collectSnapshotMetrics
+	options.ErrorLogFunc = collector.logSnapshotError
+	collector.SnapshotCollector = featurekit.NewSnapshotCollector(options)
 	return collector
 }

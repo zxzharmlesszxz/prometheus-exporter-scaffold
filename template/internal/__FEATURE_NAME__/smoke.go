@@ -1,7 +1,9 @@
 package __FEATURE_NAME__
 
-var (
-	SmokeServerArgs    []string
-	SmokeWantMetrics   = []string{metricExampleValue(defaultFeatureName) + " 1"}
-	SmokeRejectMetrics []string
-)
+import "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/featurekit"
+
+func SmokeSpec() featurekit.SmokeSpec {
+	return featurekit.SmokeSpec{
+		WantMetrics: []string{metricExampleValue(defaultFeatureName) + " 1"},
+	}
+}

@@ -7,17 +7,20 @@
 - `cmd`
   Minimal process entrypoint.
 - `internal/exporter`
-  Template feature, flags, domain snapshot type, metric descriptors, and typed snapshot-to-metrics adapter.
+  Stable exporter adapter, Makefile-injected metadata, and framework entrypoint.
+- `internal/__FEATURE_NAME__`
+  Feature spec, domain config, snapshot type, metric descriptors, and typed snapshot-to-metrics adapter.
 - `smoke`
   Binary smoke tests that build the real executable and verify CLI, HTTP, and metric behavior.
 
 ## Data Flow
 
 1. `cmd/main.go` delegates to `internal/exporter.Main()`, which runs `framework.MainFromProject(...)`.
-2. The feature registers `--__FEATURE_NAME__.refresh-interval`.
-3. The feature registers one collector with the template registry.
-4. `framework.SnapshotCollector` refreshes data in a background worker every `--__FEATURE_NAME__.refresh-interval`; scrapes read the latest completed snapshot.
-5. The collector exports domain metrics and collection health metrics.
+2. `internal/exporter` creates the concrete feature from `internal/__FEATURE_NAME__.NewSpec(...)`.
+3. Framework `featurekit.Feature` registers common flags such as `--__FEATURE_NAME__.refresh-interval` and delegates domain flags to the typed spec.
+4. Framework `featurekit.Feature` builds a typed snapshotter and collector from the spec, then registers and starts the collector.
+5. `framework.SnapshotCollector` refreshes data in a background worker every `--__FEATURE_NAME__.refresh-interval`; scrapes read the latest completed snapshot.
+6. The collector exports domain metrics and collection health metrics.
 
 ## Failure Semantics
 

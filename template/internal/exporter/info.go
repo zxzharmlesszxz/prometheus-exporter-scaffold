@@ -32,6 +32,7 @@ func ExporterInfo() Exporter {
 }
 
 func defaultExporterInfo() Exporter {
+	smoke := feature.SmokeSpec()
 	return Exporter{
 		Name:                 defaultExporterName,
 		Description:          defaultExporterDescription,
@@ -47,9 +48,9 @@ func defaultExporterInfo() Exporter {
 		Smoke: SmokeInfo{
 			ForbiddenUsageNames: []string{defaultMetricNamespace},
 			RenamedExecutable:   "renamed-" + defaultFeatureName + "-exporter",
-			ServerArgs:          append([]string{"--" + defaultFeatureName + ".refresh-interval=100ms"}, feature.SmokeServerArgs...),
-			WantMetrics:         append([]string{metricLastCollectionSuccess + " 1"}, feature.SmokeWantMetrics...),
-			RejectMetrics:       append([]string{metricLastCollectionSuccess + " 0"}, feature.SmokeRejectMetrics...),
+			ServerArgs:          append([]string{"--" + defaultFeatureName + ".refresh-interval=100ms"}, smoke.ServerArgs...),
+			WantMetrics:         append([]string{metricLastCollectionSuccess + " 1"}, smoke.WantMetrics...),
+			RejectMetrics:       append([]string{metricLastCollectionSuccess + " 0"}, smoke.RejectMetrics...),
 		},
 	}
 }

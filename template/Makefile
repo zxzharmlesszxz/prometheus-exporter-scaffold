@@ -30,7 +30,7 @@ release-archives: ## Cross-build release archives into dist/.
 		mkdir -p "$$workdir"; \
 		echo "building $$archive"; \
 		CGO_ENABLED=$(CGO_ENABLED) GOOS="$$goos" GOARCH="$$goarch" $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o "$$workdir/$$binary" $(MAIN_PACKAGE); \
-		cp README.md METRICS.md "$$workdir/"; \
+		cp README.md METRICS.md LICENSE "$$workdir/"; \
 		cp -R examples "$$workdir/examples"; \
 		tar -C $(DIST_DIR) -czf "$(DIST_DIR)/$$archive.tar.gz" "$$archive"; \
 		rm -rf "$$workdir"; \

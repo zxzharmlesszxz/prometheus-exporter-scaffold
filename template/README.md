@@ -115,3 +115,7 @@ make docker-buildx-push VERSION=v0.1.0 DOCKER_IMAGE=registry.example.com/__PROJE
 ## Architecture
 
 The high-level design is documented in [`ARCHITECTURE.md`](ARCHITECTURE.md).
+
+## License
+
+This project is licensed under the MIT License. See [`LICENSE`](LICENSE).

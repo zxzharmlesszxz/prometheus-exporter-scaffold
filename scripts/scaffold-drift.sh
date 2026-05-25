@@ -35,6 +35,7 @@ File selection:
   --list-files           Print the default managed file list and exit.
 
 Default managed files:
+  LICENSE
   Makefile.mk
   .dockerignore
   .github/dependabot.yml
@@ -44,14 +45,16 @@ Default managed files:
   cmd/main.go
   internal/exporter/defaults.go
   internal/exporter/feature.go
-  internal/exporter/feature_collectors.go
-  internal/exporter/feature_flags.go
+  internal/exporter/feature_test.go
+  internal/exporter/feature_integration_test.go
   internal/exporter/identity.go
   internal/exporter/info.go
   internal/exporter/info_test.go
   internal/exporter/main.go
-  internal/exporter/runtime_config.go
   internal/exporter/standard_metrics.go
+  internal/__FEATURE_NAME__/collector.go
+  internal/__FEATURE_NAME__/collector_test_helpers_test.go
+  internal/__FEATURE_NAME__/exporter.go
   smoke/binary_test.go
 
 Makefiles often contain domain-specific smoke-test commands in concrete
@@ -66,17 +69,20 @@ Metric constants are split so scaffold-owned standard names live in
 internal/exporter/standard_metrics.go. Domain-specific metric constants,
 collector construction, snapshots, and collector tests should live outside the
 adapter package, normally under internal/<feature-name>.
-Inspect the placeholder domain skeleton with concrete rendered paths such as
---file internal/demo/exporter.go or --file internal/domain/collector.go; these
-files are intentionally not part of the default managed set.
-Feature test helpers can be inspected with
---file internal/exporter/feature_test_helpers_test.go and
---file internal/exporter/feature_integration_test_helpers_test.go.
-Feature tests can be inspected by concern with
---file internal/exporter/feature_flags_test.go,
---file internal/exporter/feature_collectors_test.go,
---file internal/exporter/runtime_config_test.go, or
---file internal/exporter/identity_test.go.
+The scaffold-owned feature lifecycle is split from domain behavior. The files
+internal/<feature-name>/exporter.go, internal/<feature-name>/collector.go, and
+internal/<feature-name>/collector_test_helpers_test.go should stay identical to
+the rendered scaffold; domain behavior belongs in typed spec/config, metrics,
+snapshot, and lookup files.
+Inspect domain-specific skeleton files with concrete rendered paths such as
+--file internal/demo/spec.go or --file internal/domain/collector_metrics.go;
+these files are intentionally not part of the default managed set.
+The stable exporter feature adapter is intentionally compact: `feature.go`
+contains the facade over the domain feature, `feature_test.go` contains adapter
+unit tests, and `feature_integration_test.go` contains registry/HTTP integration
+coverage. Older split files such as `feature_flags.go`,
+`feature_collectors.go`, and `runtime_config.go` are obsolete and are removed
+during default `--sync`.
 USAGE
 }
 
@@ -94,6 +100,7 @@ docker_smoke_metric=""
 custom_files=()
 
 default_files=(
+  "LICENSE"
   "Makefile.mk"
   ".dockerignore"
   ".github/dependabot.yml"
@@ -103,15 +110,32 @@ default_files=(
   "cmd/main.go"
   "internal/exporter/defaults.go"
   "internal/exporter/feature.go"
-  "internal/exporter/feature_collectors.go"
-  "internal/exporter/feature_flags.go"
+  "internal/exporter/feature_test.go"
+  "internal/exporter/feature_integration_test.go"
   "internal/exporter/identity.go"
   "internal/exporter/info.go"
   "internal/exporter/info_test.go"
   "internal/exporter/main.go"
-  "internal/exporter/runtime_config.go"
   "internal/exporter/standard_metrics.go"
+  "internal/__FEATURE_NAME__/collector.go"
+  "internal/__FEATURE_NAME__/collector_test_helpers_test.go"
+  "internal/__FEATURE_NAME__/exporter.go"
   "smoke/binary_test.go"
+)
+
+obsolete_files=(
+  "internal/exporter/feature_collectors.go"
+  "internal/exporter/feature_collectors_test.go"
+  "internal/exporter/feature_flags.go"
+  "internal/exporter/feature_flags_test.go"
+  "internal/exporter/feature_integration_test_helpers_test.go"
+  "internal/exporter/featurekit/feature.go"
+  "internal/exporter/featurekit/feature_test.go"
+  "internal/exporter/featurekit/snapshot.go"
+  "internal/exporter/featurekit/snapshot_test.go"
+  "internal/exporter/feature_test_helpers_test.go"
+  "internal/exporter/runtime_config.go"
+  "internal/exporter/runtime_config_test.go"
 )
 
 while [[ $# -gt 0 ]]; do
@@ -199,8 +223,10 @@ repo_dir="$(cd "$script_dir/.." && pwd)"
 target_dir="$(cd "$target_dir" && pwd)"
 
 managed_files=("${default_files[@]}")
+managed_obsolete_files=("${obsolete_files[@]}")
 if [[ "${#custom_files[@]}" -gt 0 ]]; then
   managed_files=("${custom_files[@]}")
+  managed_obsolete_files=()
 fi
 
 detect_module() {
@@ -248,7 +274,7 @@ detect_project_name() {
         printf '%s' "$value"
         return 0
       fi
-    done < <(find "$target_dir/internal/exporter" -type f -name '*.go' -print 2>/dev/null | sort)
+    done < <(find "$target_dir/internal/exporter" -maxdepth 1 -type f -name '*.go' -print 2>/dev/null | sort)
   fi
 }
 
@@ -298,7 +324,7 @@ detect_exporter_description() {
       printf '%s' "$value"
       return 0
     fi
-  done < <(find "$dir" -type f -name '*.go' -print 2>/dev/null | sort)
+  done < <(find "$dir" -maxdepth 1 -type f -name '*.go' -print 2>/dev/null | sort)
 }
 
 detect_feature_name() {
@@ -358,7 +384,7 @@ detect_feature_name() {
       printf '%s' "$value"
       return 0
     fi
-  done < <(find "$dir" -type f -name '*.go' -print 2>/dev/null | sort)
+  done < <(find "$dir" -maxdepth 1 -type f -name '*.go' -print 2>/dev/null | sort)
 }
 
 detect_default_port() {
@@ -410,7 +436,7 @@ detect_default_port() {
       printf '%s' "$value"
       return 0
     fi
-  done < <(find "$dir" -type f -name '*.go' -print 2>/dev/null | sort)
+  done < <(find "$dir" -maxdepth 1 -type f -name '*.go' -print 2>/dev/null | sort)
 }
 
 sanitize_metric_namespace() {
@@ -456,7 +482,7 @@ detect_namespace() {
     fi
   done
   if [[ -d "$target_dir/internal/exporter" ]]; then
-    match="$(find "$target_dir/internal/exporter" -type f -name '*.go' -print 2>/dev/null | sort | while IFS= read -r file; do
+    match="$(find "$target_dir/internal/exporter" -maxdepth 1 -type f -name '*.go' -print 2>/dev/null | sort | while IFS= read -r file; do
       sed -n \
         -e 's/.*MetricNamespace[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' \
         -e 's/.*DefaultMetricNamespace[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' \
@@ -505,7 +531,7 @@ exporter_go_defines_except() {
     if grep -Eq "$pattern" "$file"; then
       return 0
     fi
-  done < <(find "$dir" -type f -name '*.go' -print 2>/dev/null | sort)
+  done < <(find "$dir" -maxdepth 1 -type f -name '*.go' -print 2>/dev/null | sort)
   return 1
 }
 
@@ -802,6 +828,18 @@ if [[ -z "$docker_smoke_metric" ]]; then
   docker_smoke_metric='$(FEATURE_NAME)_example_value 1'
 fi
 
+resolved_managed_files=()
+for file in "${managed_files[@]}"; do
+  resolved_managed_files+=("${file//__FEATURE_NAME__/$feature_name}")
+done
+managed_files=("${resolved_managed_files[@]}")
+
+resolved_obsolete_files=()
+for file in "${managed_obsolete_files[@]}"; do
+  resolved_obsolete_files+=("${file//__FEATURE_NAME__/$feature_name}")
+done
+managed_obsolete_files=("${resolved_obsolete_files[@]}")
+
 rendered_dir="$(mktemp -d)"
 trap 'rm -rf "$rendered_dir"' EXIT
 
@@ -843,7 +881,7 @@ printf '  port:         %s\n' "$default_port"
 printf '  smoke-metric: %s\n' "$docker_smoke_metric"
 
 if [[ "$mode" == "sync" && "$allow_dirty" -ne 1 ]] && git -C "$target_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  dirty="$(git -C "$target_dir" status --short -- "${managed_files[@]}")"
+  dirty="$(git -C "$target_dir" status --short -- "${managed_files[@]}" "${managed_obsolete_files[@]}")"
   if [[ -n "$dirty" ]]; then
     echo
     echo "managed files already have git changes; commit/stash them or pass --allow-dirty:" >&2
@@ -893,6 +931,20 @@ for file in "${managed_files[@]}"; do
 
   echo "DRIFT   $file"
   diff -u "$target_file" "$rendered_file" || true
+  drift=1
+done
+
+for file in "${managed_obsolete_files[@]}"; do
+  target_file="$target_dir/$file"
+  if [[ ! -e "$target_file" ]]; then
+    continue
+  fi
+  if [[ "$mode" == "sync" ]]; then
+    rm -f "$target_file"
+    echo "REMOVED $file"
+    continue
+  fi
+  echo "OBSOLETE $file (removed from current scaffold decomposition)"
   drift=1
 done
 
