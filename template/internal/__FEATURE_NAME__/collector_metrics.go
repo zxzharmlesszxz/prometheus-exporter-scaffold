@@ -4,13 +4,14 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
 )
 
 type Metrics struct {
 	exampleValueDesc *prometheus.Desc
 }
 
-func newMetrics(featureName string) Metrics {
+func newMetrics(featureName string, _ string, _ framework.Snapshotter[Snapshot]) Metrics {
 	return Metrics{
 		exampleValueDesc: prometheus.NewDesc(
 			metricExampleValue(featureName),

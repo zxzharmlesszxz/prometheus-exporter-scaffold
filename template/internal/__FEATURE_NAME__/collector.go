@@ -33,7 +33,7 @@ func newCollectorWithNow(featureName string, namespace string, logger *slog.Logg
 	})
 	collector := &Collector{
 		featureName: options.FeatureName,
-		metrics:     newMetrics(options.FeatureName),
+		metrics:     newMetrics(options.FeatureName, options.Namespace, options.Snapshotter),
 	}
 	options.DescribeFunc = collector.describeSnapshotMetrics
 	options.CollectFunc = collector.collectSnapshotMetrics
