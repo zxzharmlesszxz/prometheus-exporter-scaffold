@@ -17,7 +17,7 @@ func TestCollectorBackgroundRefreshUpdatesSnapshotOutsideScrape(t *testing.T) {
 
 	start := time.Unix(1700000000, 0)
 	snapshotter := newFakeSnapshotter(Snapshot{AttemptTime: start, Success: true, Value: 1})
-	collector := NewCollector(defaultFeatureName, defaultMetricNamespace, slog.New(slog.NewTextHandler(io.Discard, nil)), snapshotter, 20*time.Millisecond)
+	collector := NewCollector(testFeatureName, testMetricNamespace, slog.New(slog.NewTextHandler(io.Discard, nil)), snapshotter, 20*time.Millisecond)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -25,8 +25,8 @@ func TestCollectorBackgroundRefreshUpdatesSnapshotOutsideScrape(t *testing.T) {
 
 	registry := prometheus.NewRegistry()
 	exportertest.Register(t, registry, collector)
-	exportertest.WaitForMetricValue(t, registry, metricExampleValue(defaultFeatureName), nil, 1)
+	exportertest.WaitForMetricValue(t, registry, metricExampleValue(testFeatureName), nil, 1)
 
 	snapshotter.set(Snapshot{AttemptTime: start.Add(time.Minute), Success: false, Err: errors.New("refresh failed")})
-	exportertest.WaitForMetricValue(t, registry, metricLastCollectionSuccess, nil, 0)
+	exportertest.WaitForMetricValue(t, registry, testLastSuccess, nil, 0)
 }

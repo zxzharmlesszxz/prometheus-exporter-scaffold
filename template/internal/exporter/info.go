@@ -1,7 +1,5 @@
 package exporter
 
-import feature "__GO_MODULE__/internal/__FEATURE_NAME__"
-
 type Exporter struct {
 	Name                 string
 	Description          string
@@ -32,7 +30,7 @@ func ExporterInfo() Exporter {
 }
 
 func defaultExporterInfo() Exporter {
-	smoke := feature.SmokeSpec()
+	smoke := NewFeature().SmokeSpec()
 	return Exporter{
 		Name:                 defaultExporterName,
 		Description:          defaultExporterDescription,

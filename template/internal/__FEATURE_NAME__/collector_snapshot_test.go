@@ -15,11 +15,11 @@ func TestCollectorExportsSnapshot(t *testing.T) {
 	t.Parallel()
 
 	now := time.Unix(1700000000, 0)
-	collector := newCollectorWithNow(defaultFeatureName, defaultMetricNamespace, slog.New(slog.NewTextHandler(io.Discard, nil)), newFakeSnapshotter(Snapshot{
+	collector := newCollectorWithNow(testFeatureName, testMetricNamespace, slog.New(slog.NewTextHandler(io.Discard, nil)), newFakeSnapshotter(Snapshot{
 		AttemptTime: now,
 		Success:     true,
 		Value:       42,
-	}), time.Minute, func() time.Time { return now })
+	}), testRefreshInterval, func() time.Time { return now })
 
 	expected := fmt.Sprintf(`
 # HELP %[1]s Example %[5]s metric emitted by the generated exporter skeleton
@@ -34,13 +34,13 @@ func TestCollectorExportsSnapshot(t *testing.T) {
 # HELP %[4]s Unix timestamp of the last successful %[5]s data collection
 # TYPE %[4]s gauge
 %[4]s 1.7e+09
-`, metricExampleValue(defaultFeatureName), metricLastCollectionSuccess, metricLastCollectionTimestampSeconds, metricLastSuccessfulCollectionTimestampSeconds, defaultFeatureName)
+`, metricExampleValue(testFeatureName), testLastSuccess, testLastTimestamp, testLastSuccessfulTS, testFeatureName)
 
 	if err := testutil.CollectAndCompare(collector, strings.NewReader(expected),
-		metricExampleValue(defaultFeatureName),
-		metricLastCollectionSuccess,
-		metricLastCollectionTimestampSeconds,
-		metricLastSuccessfulCollectionTimestampSeconds,
+		metricExampleValue(testFeatureName),
+		testLastSuccess,
+		testLastTimestamp,
+		testLastSuccessfulTS,
 	); err != nil {
 		t.Fatalf("CollectAndCompare() error = %v", err)
 	}

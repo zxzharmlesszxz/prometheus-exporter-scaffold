@@ -22,9 +22,7 @@ func NewCollector(featureName string, namespace string, logger *slog.Logger, sna
 func newCollectorWithNow(featureName string, namespace string, logger *slog.Logger, snapshotter framework.Snapshotter[Snapshot], refreshInterval time.Duration, now func() time.Time) *Collector {
 	options := featurekit.ResolveSnapshotCollectorOptions(featurekit.SnapshotCollectorOptions[Snapshot]{
 		FeatureName:            featureName,
-		DefaultFeatureName:     defaultFeatureName,
 		Namespace:              namespace,
-		DefaultMetricNamespace: defaultMetricNamespace,
 		Logger:                 logger,
 		Snapshotter:            snapshotter,
 		DefaultSnapshotter:     SnapshotGatherer{},

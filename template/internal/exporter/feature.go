@@ -6,6 +6,7 @@ import (
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/prometheus/client_golang/prometheus"
 	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
+	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/featurekit"
 )
 
 type Feature struct {
@@ -30,4 +31,8 @@ func (f *Feature) RegisterCollectors(ctx framework.FeatureContext, registry *pro
 
 func (f *Feature) RuntimeConfig() []any {
 	return f.feature.RuntimeConfig()
+}
+
+func (f *Feature) SmokeSpec() featurekit.SmokeSpec {
+	return f.feature.SmokeSpec()
 }

@@ -136,6 +136,8 @@ obsolete_files=(
   "internal/exporter/feature_test_helpers_test.go"
   "internal/exporter/runtime_config.go"
   "internal/exporter/runtime_config_test.go"
+  "internal/__FEATURE_NAME__/smoke.go"
+  "internal/__FEATURE_NAME__/smoke_test.go"
 )
 
 while [[ $# -gt 0 ]]; do
