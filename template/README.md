@@ -42,6 +42,8 @@ The full metric contract lives in [`METRICS.md`](METRICS.md).
 ## Docker Compose
 
 The repository includes [`docker-compose.yml`](docker-compose.yml) for local testing.
+The Prometheus scrape config is embedded in Compose, while alerting rules live
+under [`examples/prometheus`](examples/prometheus).
 It starts:
 
 - `exporter`

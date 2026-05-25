@@ -123,9 +123,8 @@ docker-buildx-push: ## Build and push a multi-platform Docker image with buildx.
 docker-push: ## Push the Docker image.
 	$(DOCKER) push $(DOCKER_IMAGE)
 
-promtool-check: ## Validate Prometheus example config and rules.
-	$(DOCKER) run --rm --entrypoint promtool -v "$(CURDIR)/examples/prometheus:/etc/prometheus:ro" $(PROMTOOL_IMAGE) check config /etc/prometheus/prometheus.yml
-	$(DOCKER) run --rm --entrypoint sh -v "$(CURDIR)/examples/prometheus:/etc/prometheus:ro" $(PROMTOOL_IMAGE) -c 'promtool check rules /etc/prometheus/rules/*.yml'
+promtool-check: ## Validate the Prometheus config and rules used by Docker Compose.
+	$(MAKE) compose COMPOSE_ARGS="run --rm --no-deps --entrypoint promtool prometheus check config /etc/prometheus/prometheus.yml"
 
 compose: ## Run Docker Compose with Makefile.mk variables. Override COMPOSE_ARGS as needed.
 	COMPOSE_PROJECT_NAME="$(COMPOSE_PROJECT_NAME)" \
