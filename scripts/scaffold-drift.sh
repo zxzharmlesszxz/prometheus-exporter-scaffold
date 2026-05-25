@@ -837,10 +837,14 @@ done
 managed_files=("${resolved_managed_files[@]}")
 
 resolved_obsolete_files=()
-for file in "${managed_obsolete_files[@]}"; do
-  resolved_obsolete_files+=("${file//__FEATURE_NAME__/$feature_name}")
-done
-managed_obsolete_files=("${resolved_obsolete_files[@]}")
+if [[ "${#managed_obsolete_files[@]}" -gt 0 ]]; then
+  for file in "${managed_obsolete_files[@]}"; do
+    resolved_obsolete_files+=("${file//__FEATURE_NAME__/$feature_name}")
+  done
+  managed_obsolete_files=("${resolved_obsolete_files[@]}")
+else
+  managed_obsolete_files=()
+fi
 
 rendered_dir="$(mktemp -d)"
 trap 'rm -rf "$rendered_dir"' EXIT
@@ -936,19 +940,21 @@ for file in "${managed_files[@]}"; do
   drift=1
 done
 
-for file in "${managed_obsolete_files[@]}"; do
-  target_file="$target_dir/$file"
-  if [[ ! -e "$target_file" ]]; then
-    continue
-  fi
-  if [[ "$mode" == "sync" ]]; then
-    rm -f "$target_file"
-    echo "REMOVED $file"
-    continue
-  fi
-  echo "OBSOLETE $file (removed from current scaffold decomposition)"
-  drift=1
-done
+if [[ "${#managed_obsolete_files[@]}" -gt 0 ]]; then
+  for file in "${managed_obsolete_files[@]}"; do
+    target_file="$target_dir/$file"
+    if [[ ! -e "$target_file" ]]; then
+      continue
+    fi
+    if [[ "$mode" == "sync" ]]; then
+      rm -f "$target_file"
+      echo "REMOVED $file"
+      continue
+    fi
+    echo "OBSOLETE $file (removed from current scaffold decomposition)"
+    drift=1
+  done
+fi
 
 if [[ "$mode" == "check" && "$drift" -ne 0 ]]; then
   echo

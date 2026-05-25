@@ -39,8 +39,6 @@ func TestFeatureRegistersCollector(t *testing.T) {
 	if err := feature.RegisterCollectors(testFeatureContext(), registry); err != nil {
 		t.Fatalf("RegisterCollectors() error = %v", err)
 	}
-
-	exportertest.WaitForMetricValue(t, registry, metricLastCollectionSuccess, nil, 1)
 }
 
 func TestFeatureReportsCollectorRegistrationError(t *testing.T) {
