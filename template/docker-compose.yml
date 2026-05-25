@@ -7,7 +7,7 @@ services:
         LDFLAGS: ${LDFLAGS:-}
     command:
       - --web.listen-address=:${COMPOSE_EXPORTER_PORT:-9888}
-      - --${FEATURE_NAME:-exporter}.refresh-interval=30s
+      - --${FEATURE_NAME}.refresh-interval=30s
     ports:
       - "${COMPOSE_EXPORTER_PORT:-9888}:${COMPOSE_EXPORTER_PORT:-9888}"
 
@@ -58,10 +58,10 @@ configs:
         - /etc/prometheus/rules/*.yml
 
       scrape_configs:
-        - job_name: __FEATURE_NAME___exporter
+        - job_name: ${FEATURE_NAME}_exporter
           static_configs:
             - targets:
-                - exporter:__DEFAULT_PORT__
+                - exporter:${COMPOSE_EXPORTER_PORT:-9888}
   grafana_prometheus_datasource:
     content: |
       apiVersion: 1
