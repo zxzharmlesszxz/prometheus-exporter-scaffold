@@ -62,6 +62,16 @@ Endpoints:
 - `http://localhost:9090`
 - `http://localhost:3000`
 
+## Grafana
+
+Docker Compose provisions Grafana with:
+
+- Prometheus datasource `DS_PROMETHEUS`
+- dashboards from [`examples/grafana`](examples/grafana)
+- default login `admin` / `admin`
+
+Open `http://localhost:3000` after `make compose`.
+
 For a direct Docker build, run:
 
 ```bash
