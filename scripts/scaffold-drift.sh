@@ -44,6 +44,7 @@ Default managed files:
   LICENSE
   Makefile
   Makefile.mk
+  docker-compose.yml
   .dockerignore
   .github/dependabot.yml
   .github/workflows/ci.yml
@@ -66,6 +67,9 @@ Default managed files:
 
 Makefile should stay scaffold-managed. Domain-specific Docker smoke mounts,
 exporter arguments, and extra metric checks belong in Makefile.mk variables.
+docker-compose.yml should stay scaffold-managed. Domain-specific Compose
+commands, mounts, configs, and local example wiring belong in
+docker-compose.override.yml.
 Dockerfiles can also be domain-specific when exporters need runtime packages.
 Legacy exporters may still define Main(), FeatureName(), or
 DefaultListenAddress() in internal/exporter/feature.go, or keep rendered
@@ -112,6 +116,7 @@ default_files=(
   "LICENSE"
   "Makefile"
   "Makefile.mk"
+  "docker-compose.yml"
   ".dockerignore"
   ".github/dependabot.yml"
   ".github/workflows/ci.yml"
