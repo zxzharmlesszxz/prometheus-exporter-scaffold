@@ -1,8 +1,6 @@
 package __FEATURE_NAME__
 
-import (
-	"time"
-)
+import "time"
 
 type Snapshot struct {
 	AttemptTime time.Time
@@ -10,5 +8,3 @@ type Snapshot struct {
 	Value       float64
 	Err         error
 }
-
-type SnapshotGatherer struct{}

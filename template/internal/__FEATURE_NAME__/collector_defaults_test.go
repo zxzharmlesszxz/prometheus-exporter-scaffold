@@ -16,7 +16,7 @@ import (
 func TestCollectorDefaultsAndFailureMetrics(t *testing.T) {
 	t.Parallel()
 
-	collector := NewCollector("", "", nil, newFakeSnapshotter(Snapshot{
+	collector := newTestCollector("", "", newFakeSnapshotter(Snapshot{
 		Success: false,
 		Err:     errors.New("refresh failed"),
 	}), 0)
@@ -47,7 +47,7 @@ func TestCollectorUsesDefaultSnapshotter(t *testing.T) {
 	t.Parallel()
 
 	now := time.Unix(1700000000, 0)
-	collector := newCollectorWithNow(testFeatureName, testMetricNamespace, slog.New(slog.NewTextHandler(io.Discard, nil)), nil, testRefreshInterval, func() time.Time {
+	collector := newTestCollectorWithNow(testFeatureName, testMetricNamespace, slog.New(slog.NewTextHandler(io.Discard, nil)), nil, testRefreshInterval, func() time.Time {
 		return now
 	})
 

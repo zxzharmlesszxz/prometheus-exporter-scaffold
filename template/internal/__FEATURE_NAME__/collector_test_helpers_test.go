@@ -2,8 +2,12 @@ package __FEATURE_NAME__
 
 import (
 	"context"
+	"log/slog"
 	"sync/atomic"
 	"time"
+
+	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
+	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/featurekit"
 )
 
 const (
@@ -31,4 +35,25 @@ func (s *fakeSnapshotter) Snapshot(context.Context, time.Time) Snapshot {
 
 func (s *fakeSnapshotter) set(snapshot Snapshot) {
 	s.snapshot.Store(snapshot)
+}
+
+func newTestCollector(featureName string, namespace string, snapshotter framework.Snapshotter[Snapshot], refreshInterval time.Duration) framework.StartableCollector {
+	return newTestCollectorWithNow(featureName, namespace, nil, snapshotter, refreshInterval, nil)
+}
+
+func newTestCollectorWithNow(featureName string, namespace string, logger *slog.Logger, snapshotter framework.Snapshotter[Snapshot], refreshInterval time.Duration, now func() time.Time) framework.StartableCollector {
+	return featurekit.NewSnapshotMetricsCollector(featurekit.SnapshotMetricsCollectorOptions[Snapshot]{
+		SnapshotCollectorOptions: featurekit.SnapshotCollectorOptions[Snapshot]{
+			FeatureName:            featureName,
+			Namespace:              namespace,
+			Logger:                 logger,
+			Snapshotter:            snapshotter,
+			DefaultSnapshotter:     SnapshotGatherer{},
+			RefreshInterval:        refreshInterval,
+			DefaultRefreshInterval: DefaultRefreshInterval,
+			StatusFunc:             snapshotStatus,
+			Now:                    now,
+		},
+		MetricsFunc: newMetrics,
+	})
 }

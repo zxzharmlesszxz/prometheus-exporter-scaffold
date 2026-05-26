@@ -17,7 +17,7 @@ func TestCollectorBackgroundRefreshUpdatesSnapshotOutsideScrape(t *testing.T) {
 
 	start := time.Unix(1700000000, 0)
 	snapshotter := newFakeSnapshotter(Snapshot{AttemptTime: start, Success: true, Value: 1})
-	collector := NewCollector(testFeatureName, testMetricNamespace, slog.New(slog.NewTextHandler(io.Discard, nil)), snapshotter, 20*time.Millisecond)
+	collector := newTestCollectorWithNow(testFeatureName, testMetricNamespace, slog.New(slog.NewTextHandler(io.Discard, nil)), snapshotter, 20*time.Millisecond, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

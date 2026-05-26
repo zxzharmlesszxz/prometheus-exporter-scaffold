@@ -15,7 +15,7 @@ func TestCollectorExportsSnapshot(t *testing.T) {
 	t.Parallel()
 
 	now := time.Unix(1700000000, 0)
-	collector := newCollectorWithNow(testFeatureName, testMetricNamespace, slog.New(slog.NewTextHandler(io.Discard, nil)), newFakeSnapshotter(Snapshot{
+	collector := newTestCollectorWithNow(testFeatureName, testMetricNamespace, slog.New(slog.NewTextHandler(io.Discard, nil)), newFakeSnapshotter(Snapshot{
 		AttemptTime: now,
 		Success:     true,
 		Value:       42,

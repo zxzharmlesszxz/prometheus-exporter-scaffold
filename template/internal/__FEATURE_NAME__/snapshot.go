@@ -23,8 +23,8 @@ func snapshotStatus(snapshot Snapshot) framework.SnapshotStatus {
 	}
 }
 
-func (c *Collector) logSnapshotError(logger *slog.Logger, snapshot Snapshot) {
+func (m *Metrics) LogSnapshotError(logger *slog.Logger, snapshot Snapshot) {
 	if snapshot.Err != nil {
-		logger.Error(c.featureName+" data collection failed", "err", snapshot.Err)
+		logger.Error(m.featureName+" data collection failed", "err", snapshot.Err)
 	}
 }

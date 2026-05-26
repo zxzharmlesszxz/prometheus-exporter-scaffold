@@ -4,34 +4,36 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
+	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/featurekit"
 )
 
 type Metrics struct {
+	featureName      string
 	exampleValueDesc *prometheus.Desc
 }
 
-func newMetrics(featureName string, _ string, _ framework.Snapshotter[Snapshot]) Metrics {
-	return Metrics{
+func newMetrics(ctx featurekit.SnapshotMetricsContext[Snapshot]) featurekit.SnapshotMetrics[Snapshot] {
+	return &Metrics{
+		featureName: ctx.FeatureName,
 		exampleValueDesc: prometheus.NewDesc(
-			metricExampleValue(featureName),
-			"Example "+featureName+" metric emitted by the generated exporter skeleton",
+			metricExampleValue(ctx.FeatureName),
+			"Example "+ctx.FeatureName+" metric emitted by the generated exporter skeleton",
 			nil,
 			nil,
 		),
 	}
 }
 
-func (c *Collector) describeSnapshotMetrics(ch chan<- *prometheus.Desc) {
-	ch <- c.metrics.exampleValueDesc
+func (m *Metrics) Describe(ch chan<- *prometheus.Desc) {
+	ch <- m.exampleValueDesc
 }
 
-func (c *Collector) collectSnapshotMetrics(ch chan<- prometheus.Metric, snapshot Snapshot, _ time.Time) {
+func (m *Metrics) Collect(ch chan<- prometheus.Metric, snapshot Snapshot, _ time.Time) {
 	if !snapshot.Success {
 		return
 	}
 	ch <- prometheus.MustNewConstMetric(
-		c.metrics.exampleValueDesc,
+		m.exampleValueDesc,
 		prometheus.GaugeValue,
 		snapshot.Value,
 	)

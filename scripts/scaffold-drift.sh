@@ -61,7 +61,6 @@ Default managed files:
   internal/exporter/info_test.go
   internal/exporter/main.go
   internal/exporter/standard_metrics.go
-  internal/__FEATURE_NAME__/collector.go
   internal/__FEATURE_NAME__/collector_test_helpers_test.go
   internal/__FEATURE_NAME__/exporter.go
   smoke/binary_test.go
@@ -78,13 +77,14 @@ defaults in older files. Remove those definitions once when adopting the split
 scaffold Go files.
 Metric constants are split so scaffold-owned standard names live in
 internal/exporter/standard_metrics.go. Domain-specific metric constants,
-collector construction, snapshots, and collector tests should live outside the
+metrics, snapshots, snapshotters, and collector tests should live outside the
 adapter package, normally under internal/<feature-name>.
 The scaffold-owned feature lifecycle is split from domain behavior. The files
-internal/<feature-name>/exporter.go, internal/<feature-name>/collector.go, and
+internal/<feature-name>/exporter.go and
 internal/<feature-name>/collector_test_helpers_test.go should stay identical to
-the rendered scaffold; domain behavior belongs in typed spec/config, metrics,
-snapshot, and lookup files.
+the rendered scaffold; collector construction belongs to framework featurekit,
+while domain behavior belongs in typed spec/config, metrics, snapshot, and
+lookup files.
 Inspect domain-specific skeleton files with concrete rendered paths such as
 --file internal/demo/spec.go or --file internal/domain/collector_metrics.go;
 these files are intentionally not part of the default managed set.
@@ -134,7 +134,6 @@ default_files=(
   "internal/exporter/info_test.go"
   "internal/exporter/main.go"
   "internal/exporter/standard_metrics.go"
-  "internal/__FEATURE_NAME__/collector.go"
   "internal/__FEATURE_NAME__/collector_test_helpers_test.go"
   "internal/__FEATURE_NAME__/exporter.go"
   "smoke/binary_test.go"
@@ -153,6 +152,7 @@ obsolete_files=(
   "internal/exporter/feature_test_helpers_test.go"
   "internal/exporter/runtime_config.go"
   "internal/exporter/runtime_config_test.go"
+  "internal/__FEATURE_NAME__/collector.go"
   "internal/__FEATURE_NAME__/smoke.go"
   "internal/__FEATURE_NAME__/smoke_test.go"
 )
