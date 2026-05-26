@@ -29,6 +29,12 @@ Render metadata overrides:
   --port PORT            Defaults to DefaultListenAddress/defaultListenAddress or 9888.
   --docker-smoke-metric TEXT
                          Defaults to DOCKER_SMOKE_METRIC from Makefile.mk or skeleton default.
+  --docker-smoke-run-options TEXT
+                         Extra options passed to `docker run` before the image.
+  --docker-smoke-exporter-args TEXT
+                         Extra exporter arguments passed after the image.
+  --docker-smoke-extra-metrics TEXT
+                         Additional metric assertions separated by '|'.
 
 File selection:
   --file PATH            Compare/sync this rendered path. Can be repeated.
@@ -36,6 +42,7 @@ File selection:
 
 Default managed files:
   LICENSE
+  Makefile
   Makefile.mk
   .dockerignore
   .github/dependabot.yml
@@ -57,9 +64,8 @@ Default managed files:
   internal/__FEATURE_NAME__/exporter.go
   smoke/binary_test.go
 
-Makefiles often contain domain-specific smoke-test commands in concrete
-exporters. Inspect target logic with --file Makefile and port relevant hunks
-manually. Common make variables live in Makefile.mk and are scaffold-managed.
+Makefile should stay scaffold-managed. Domain-specific Docker smoke mounts,
+exporter arguments, and extra metric checks belong in Makefile.mk variables.
 Dockerfiles can also be domain-specific when exporters need runtime packages.
 Legacy exporters may still define Main(), FeatureName(), or
 DefaultListenAddress() in internal/exporter/feature.go, or keep rendered
@@ -97,10 +103,14 @@ feature_name=""
 metric_namespace=""
 default_port=""
 docker_smoke_metric=""
+docker_smoke_run_options=""
+docker_smoke_exporter_args=""
+docker_smoke_extra_metrics=""
 custom_files=()
 
 default_files=(
   "LICENSE"
+  "Makefile"
   "Makefile.mk"
   ".dockerignore"
   ".github/dependabot.yml"
@@ -184,6 +194,18 @@ while [[ $# -gt 0 ]]; do
       ;;
     --docker-smoke-metric)
       docker_smoke_metric="${2:-}"
+      shift 2
+      ;;
+    --docker-smoke-run-options)
+      docker_smoke_run_options="${2:-}"
+      shift 2
+      ;;
+    --docker-smoke-exporter-args)
+      docker_smoke_exporter_args="${2:-}"
+      shift 2
+      ;;
+    --docker-smoke-extra-metrics)
+      docker_smoke_extra_metrics="${2:-}"
       shift 2
       ;;
     --file)
@@ -500,10 +522,11 @@ detect_namespace() {
   derive_namespace_from_project "${go_module:-$project_name}"
 }
 
-detect_docker_smoke_metric() {
+detect_makefile_mk_var() {
+  local name="$1"
   [[ -f "$target_dir/Makefile.mk" ]] || return 0
-  awk -F '\\?=' '
-    /^[[:space:]]*DOCKER_SMOKE_METRIC[[:space:]]*\?=/ {
+  awk -v name="$name" -F '\\?=' '
+    $1 ~ "^[[:space:]]*" name "[[:space:]]*$" {
       value = $2
       sub(/^[[:space:]]*/, "", value)
       sub(/[[:space:]]*$/, "", value)
@@ -511,6 +534,10 @@ detect_docker_smoke_metric() {
       exit
     }
   ' "$target_dir/Makefile.mk"
+}
+
+detect_docker_smoke_metric() {
+  detect_makefile_mk_var "DOCKER_SMOKE_METRIC"
 }
 
 feature_go_defines() {
@@ -829,6 +856,15 @@ fi
 if [[ -z "$docker_smoke_metric" ]]; then
   docker_smoke_metric='$(FEATURE_NAME)_example_value 1'
 fi
+if [[ -z "$docker_smoke_run_options" ]]; then
+  docker_smoke_run_options="$(detect_makefile_mk_var "DOCKER_SMOKE_RUN_OPTIONS")"
+fi
+if [[ -z "$docker_smoke_exporter_args" ]]; then
+  docker_smoke_exporter_args="$(detect_makefile_mk_var "DOCKER_SMOKE_EXPORTER_ARGS")"
+fi
+if [[ -z "$docker_smoke_extra_metrics" ]]; then
+  docker_smoke_extra_metrics="$(detect_makefile_mk_var "DOCKER_SMOKE_EXTRA_METRICS")"
+fi
 
 resolved_managed_files=()
 for file in "${managed_files[@]}"; do
@@ -857,6 +893,9 @@ trap 'rm -rf "$rendered_dir"' EXIT
   --namespace "$metric_namespace" \
   --port "$default_port" \
   --docker-smoke-metric "$docker_smoke_metric" \
+  --docker-smoke-run-options "$docker_smoke_run_options" \
+  --docker-smoke-exporter-args "$docker_smoke_exporter_args" \
+  --docker-smoke-extra-metrics "$docker_smoke_extra_metrics" \
   --target-dir "$rendered_dir" >/dev/null
 
 format_rendered_go() {
@@ -885,6 +924,9 @@ printf '  feature-name: %s\n' "$feature_name"
 printf '  namespace:    %s\n' "$metric_namespace"
 printf '  port:         %s\n' "$default_port"
 printf '  smoke-metric: %s\n' "$docker_smoke_metric"
+printf '  smoke-run-options: %s\n' "${docker_smoke_run_options:-<empty>}"
+printf '  smoke-exporter-args: %s\n' "${docker_smoke_exporter_args:-<empty>}"
+printf '  smoke-extra-metrics: %s\n' "${docker_smoke_extra_metrics:-<empty>}"
 
 if [[ "$mode" == "sync" && "$allow_dirty" -ne 1 ]] && git -C "$target_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   dirty="$(git -C "$target_dir" status --short -- "${managed_files[@]}" "${managed_obsolete_files[@]}")"

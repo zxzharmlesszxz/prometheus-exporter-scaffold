@@ -162,7 +162,7 @@ docker-smoke-image: ## Smoke-test an already built Docker image.
 	echo "$$version_output" | grep -F "$(DOCKER_SMOKE_EXPECTED_VERSION)" >/dev/null; \
 	echo "$$version_output" | grep -F "$(DOCKER_SMOKE_EXPECTED_BRANCH)" >/dev/null; \
 	echo "$$version_output" | grep -F "$(DOCKER_SMOKE_EXPECTED_REVISION)" >/dev/null
-	@cid="$$( $(DOCKER) run -d --rm $(DOCKER_IMAGE) --log.level=error --web.listen-address=:9900 --$(FEATURE_NAME).refresh-interval=100ms )"; \
+	@cid="$$( $(DOCKER) run -d --rm $(DOCKER_SMOKE_RUN_OPTIONS) $(DOCKER_IMAGE) --log.level=error --web.listen-address=:9900 --$(FEATURE_NAME).refresh-interval=100ms $(DOCKER_SMOKE_EXPORTER_ARGS) )"; \
 	trap "$(DOCKER) rm -f $$cid >/dev/null 2>&1 || true" EXIT; \
 	i=0; \
 	while [ "$$i" -lt 60 ]; do \
@@ -196,6 +196,17 @@ docker-smoke-image: ## Smoke-test an already built Docker image.
 	echo "$$metrics" | grep -F 'branch="$(DOCKER_SMOKE_EXPECTED_BRANCH)"' >/dev/null; \
 	echo "$$metrics" | grep -F 'revision="$(DOCKER_SMOKE_EXPECTED_REVISION)"' >/dev/null; \
 	echo "$$metrics" | grep -F -- '$(DOCKER_SMOKE_METRIC)' >/dev/null; \
+	extra_metrics='$(DOCKER_SMOKE_EXTRA_METRICS)'; \
+	if [ -n "$$extra_metrics" ]; then \
+		old_ifs="$$IFS"; \
+		IFS='|'; \
+		for metric in $$extra_metrics; do \
+			IFS="$$old_ifs"; \
+			echo "$$metrics" | grep -F -- "$$metric" >/dev/null; \
+			IFS='|'; \
+		done; \
+		IFS="$$old_ifs"; \
+	fi; \
 	$(DOCKER) rm -f "$$cid" >/dev/null 2>&1 || true
 
 docker-smoke: docker-smoke-build ## Build and smoke-test the Docker image.
