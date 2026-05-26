@@ -56,6 +56,7 @@ Default managed files:
   internal/exporter/feature_test.go
   internal/exporter/feature_integration_test.go
   internal/exporter/identity.go
+  internal/exporter/identity_test.go
   internal/exporter/info.go
   internal/exporter/info_test.go
   internal/exporter/main.go
@@ -128,6 +129,7 @@ default_files=(
   "internal/exporter/feature_test.go"
   "internal/exporter/feature_integration_test.go"
   "internal/exporter/identity.go"
+  "internal/exporter/identity_test.go"
   "internal/exporter/info.go"
   "internal/exporter/info_test.go"
   "internal/exporter/main.go"
