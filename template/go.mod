@@ -3,12 +3,12 @@ module __GO_MODULE__
 go 1.26.0
 
 require (
-	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/prometheus/client_golang v1.23.2
-	github.com/zxzharmlesszxz/prometheus-exporter-framework v0.2.1
+	github.com/zxzharmlesszxz/prometheus-exporter-framework v0.2.2
 )
 
 require (
+	github.com/alecthomas/kingpin/v2 v2.4.0 // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
