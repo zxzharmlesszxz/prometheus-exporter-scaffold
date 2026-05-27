@@ -7,7 +7,7 @@
 - `cmd`
   Minimal process entrypoint.
 - `internal/exporter`
-  Stable exporter adapter, Makefile-injected metadata, and framework entrypoint.
+  Thin adapter that creates the domain feature and delegates bootstrap metadata to the framework.
 - `internal/__FEATURE_NAME__`
   Feature spec, domain config, snapshot type, metric descriptors, and typed snapshot-to-metrics adapter.
 - `smoke`
@@ -15,8 +15,8 @@
 
 ## Data Flow
 
-1. `cmd/main.go` delegates to `internal/exporter.Main()`, which runs `framework.MainFromProject(...)`.
-2. `internal/exporter` creates the concrete feature from `internal/__FEATURE_NAME__.NewSpec(...)`.
+1. `cmd/main.go` delegates to `internal/exporter.Main()`, which runs `framework.MainFromInjectedProject(...)`.
+2. `internal/exporter` creates the concrete feature from `internal/__FEATURE_NAME__` using framework-injected feature metadata.
 3. Framework `featurekit.Feature` registers common flags such as `--__FEATURE_NAME__.refresh-interval` and delegates domain flags to the typed spec.
 4. Framework `featurekit.Feature` builds a typed snapshotter and collector from the spec, then registers and starts the collector.
 5. `framework.SnapshotCollector` refreshes data in a background worker every `--__FEATURE_NAME__.refresh-interval`; scrapes read the latest completed snapshot.

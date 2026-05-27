@@ -24,9 +24,9 @@ Render metadata overrides:
   --project-name NAME    Defaults to basename of --target-dir.
   --module MODULE        Defaults to module path from go.mod.
   --description TEXT     Defaults to rendered exporter description, README H1, or project name.
-  --feature-name NAME    Defaults to DefaultFeatureName/defaultFeatureName or FeatureName().
-  --namespace NAME       Defaults to DefaultMetricNamespace, Namespace: from tests, or derived.
-  --port PORT            Defaults to DefaultListenAddress/defaultListenAddress or 9888.
+  --feature-name NAME    Defaults to FEATURE_NAME from Makefile.mk or derived.
+  --namespace NAME       Defaults to METRIC_NAMESPACE from Makefile.mk or derived.
+  --port PORT            Defaults to DEFAULT_PORT from Makefile.mk or 9888.
   --docker-smoke-metric TEXT
                          Defaults to DOCKER_SMOKE_METRIC from Makefile.mk or skeleton default.
   --docker-smoke-run-options TEXT
@@ -51,16 +51,7 @@ Default managed files:
   .gitignore
   .gitlab-ci.yml
   cmd/main.go
-  internal/exporter/defaults.go
-  internal/exporter/feature.go
-  internal/exporter/feature_test.go
-  internal/exporter/feature_integration_test.go
-  internal/exporter/identity.go
-  internal/exporter/identity_test.go
-  internal/exporter/info.go
-  internal/exporter/info_test.go
-  internal/exporter/main.go
-  internal/exporter/standard_metrics.go
+  internal/exporter/exporter.go
   internal/__FEATURE_NAME__/collector_test_helpers_test.go
   internal/__FEATURE_NAME__/exporter.go
   smoke/binary_test.go
@@ -71,14 +62,13 @@ docker-compose.yml should stay scaffold-managed. Domain-specific Compose
 commands, mounts, configs, and local example wiring belong in
 docker-compose.override.yml.
 Dockerfiles can also be domain-specific when exporters need runtime packages.
-Legacy exporters may still define Main(), FeatureName(), or
-DefaultListenAddress() in internal/exporter/feature.go, or keep rendered
-defaults in older files. Remove those definitions once when adopting the split
-scaffold Go files.
-Metric constants are split so scaffold-owned standard names live in
-internal/exporter/standard_metrics.go. Domain-specific metric constants,
-metrics, snapshots, snapshotters, and collector tests should live outside the
-adapter package, normally under internal/<feature-name>.
+Legacy exporters may still keep older scaffold-owned files under
+internal/exporter. Current scaffold shape keeps only a thin adapter in
+internal/exporter/exporter.go and moves reusable bootstrap/info behavior into
+the framework.
+Domain-specific metric constants, metrics, snapshots, snapshotters, and
+collector tests should live outside the adapter package, normally under
+internal/<feature-name>.
 The scaffold-owned feature lifecycle is split from domain behavior. The files
 internal/<feature-name>/exporter.go and
 internal/<feature-name>/collector_test_helpers_test.go should stay identical to
@@ -88,11 +78,11 @@ lookup files.
 Inspect domain-specific skeleton files with concrete rendered paths such as
 --file internal/demo/spec.go or --file internal/domain/collector_metrics.go;
 these files are intentionally not part of the default managed set.
-The stable exporter feature adapter is intentionally compact: `feature.go`
-contains the facade over the domain feature, `feature_test.go` contains adapter
-unit tests, and `feature_integration_test.go` contains registry/HTTP integration
-coverage. Older split files such as `feature_flags.go`,
-`feature_collectors.go`, and `runtime_config.go` are obsolete and are removed
+The stable exporter feature adapter is intentionally compact:
+`internal/exporter/exporter.go` only imports the domain package, creates the
+feature with framework-injected metadata, and delegates Main()/ExporterInfo()
+to the framework. Older split files such as `feature.go`, `defaults.go`,
+`info.go`, `standard_metrics.go`, and their tests are obsolete and are removed
 during default `--sync`.
 USAGE
 }
@@ -124,34 +114,35 @@ default_files=(
   ".gitignore"
   ".gitlab-ci.yml"
   "cmd/main.go"
-  "internal/exporter/defaults.go"
-  "internal/exporter/feature.go"
-  "internal/exporter/feature_test.go"
-  "internal/exporter/feature_integration_test.go"
-  "internal/exporter/identity.go"
-  "internal/exporter/identity_test.go"
-  "internal/exporter/info.go"
-  "internal/exporter/info_test.go"
-  "internal/exporter/main.go"
-  "internal/exporter/standard_metrics.go"
+  "internal/exporter/exporter.go"
   "internal/__FEATURE_NAME__/collector_test_helpers_test.go"
   "internal/__FEATURE_NAME__/exporter.go"
   "smoke/binary_test.go"
 )
 
 obsolete_files=(
+  "internal/exporter/defaults.go"
+  "internal/exporter/feature.go"
   "internal/exporter/feature_collectors.go"
   "internal/exporter/feature_collectors_test.go"
   "internal/exporter/feature_flags.go"
   "internal/exporter/feature_flags_test.go"
+  "internal/exporter/feature_integration_test.go"
   "internal/exporter/feature_integration_test_helpers_test.go"
+  "internal/exporter/feature_test.go"
   "internal/exporter/featurekit/feature.go"
   "internal/exporter/featurekit/feature_test.go"
   "internal/exporter/featurekit/snapshot.go"
   "internal/exporter/featurekit/snapshot_test.go"
   "internal/exporter/feature_test_helpers_test.go"
+  "internal/exporter/identity.go"
+  "internal/exporter/identity_test.go"
+  "internal/exporter/info.go"
+  "internal/exporter/info_test.go"
+  "internal/exporter/main.go"
   "internal/exporter/runtime_config.go"
   "internal/exporter/runtime_config_test.go"
+  "internal/exporter/standard_metrics.go"
   "internal/__FEATURE_NAME__/collector.go"
   "internal/__FEATURE_NAME__/smoke.go"
   "internal/__FEATURE_NAME__/smoke_test.go"

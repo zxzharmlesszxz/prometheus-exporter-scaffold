@@ -75,7 +75,8 @@ scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --sync
 ```
 
 The default managed set is intentionally conservative: CI files, ignore files,
-`cmd/main.go`, Dependabot config, and stable scaffold-owned Go wiring under `internal/exporter`.
+`cmd/main.go`, Dependabot config, `Makefile`, `Makefile.mk`, and the thin
+scaffold-owned adapter in `internal/exporter/exporter.go`.
 Concrete exporters keep domain logic in their rendered feature package, normally
 `internal/<feature-name>`, so inspect those files separately instead of blindly
 syncing them:
@@ -83,32 +84,22 @@ syncing them:
 ```bash
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file Makefile
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file Dockerfile
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/feature_flags_test.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/feature_collectors_test.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/runtime_config_test.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/identity_test.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/feature_test_helpers_test.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/feature_integration_test_helpers_test.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/exporter.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/exporter.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/metrics.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/collector_types.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/snapshot_types.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/collector_metrics.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/collector_test_helpers_test.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/collector_snapshot_test.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/collector_refresh_test.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/collector_defaults_test.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/snapshot.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/snapshotter.go
 ```
 
-Older exporters may still define `Main()`, `FeatureName()`, or
-`DefaultListenAddress()` inside `internal/exporter/feature.go`, and
-`defaultListenAddress` may still live there as well. Remove those definitions
-once when adopting the split scaffold Go files; the drift script will report
-`LEGACY` instead of syncing duplicate definitions. It reports the same guard for
-standard metric constants that still live in `metrics.go`, and for collector
-types, collector metric methods, and snapshot helpers that still live in
-`internal/exporter/collector.go`. Collector test helpers get the same guard
-while they still live in `internal/exporter/collector_test.go`; collector tests
-get it while they still live in `collector_test.go`; domain feature methods and
-test helpers get it while they still live in `internal/exporter/feature.go`,
-`feature_test.go`, or `feature_integration_test.go`.
+Older exporters may still have scaffold-owned bootstrap files under
+`internal/exporter`, such as `defaults.go`, `feature.go`, `info.go`,
+`standard_metrics.go`, and their tests. Current scaffold shape replaces that
+set with `internal/exporter/exporter.go`; project metadata, standard metric
+names, and binary smoke metadata are supplied by the framework through
+Makefile-injected linker variables.
