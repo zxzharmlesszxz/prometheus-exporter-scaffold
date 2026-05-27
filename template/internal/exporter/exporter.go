@@ -6,6 +6,8 @@ import (
 	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
 )
 
+var mainFromInjectedProject = framework.MainFromInjectedProject
+
 func NewFeature() framework.Feature {
 	return feature.NewExporter(feature.ExporterOptions{
 		FeatureName: framework.InjectedFeatureName(),
@@ -13,7 +15,7 @@ func NewFeature() framework.Feature {
 }
 
 func Main() {
-	framework.MainFromInjectedProject(NewFeature())
+	mainFromInjectedProject(NewFeature())
 }
 
 func ExporterInfo() framework.ExporterInfo {

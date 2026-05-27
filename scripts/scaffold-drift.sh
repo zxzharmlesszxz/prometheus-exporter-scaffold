@@ -52,6 +52,7 @@ Default managed files:
   .gitlab-ci.yml
   cmd/main.go
   internal/exporter/exporter.go
+  internal/exporter/exporter_test.go
   internal/__FEATURE_NAME__/collector_test_helpers_test.go
   internal/__FEATURE_NAME__/exporter.go
   smoke/binary_test.go
@@ -115,6 +116,7 @@ default_files=(
   ".gitlab-ci.yml"
   "cmd/main.go"
   "internal/exporter/exporter.go"
+  "internal/exporter/exporter_test.go"
   "internal/__FEATURE_NAME__/collector_test_helpers_test.go"
   "internal/__FEATURE_NAME__/exporter.go"
   "smoke/binary_test.go"
