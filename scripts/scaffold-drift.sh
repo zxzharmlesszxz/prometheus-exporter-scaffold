@@ -77,7 +77,7 @@ the rendered scaffold; collector construction belongs to framework featurekit,
 while domain behavior belongs in typed spec/config, metrics, snapshot, and
 lookup files.
 Inspect domain-specific skeleton files with concrete rendered paths such as
---file internal/demo/spec.go or --file internal/domain/collector_metrics.go;
+--file internal/demo/spec.go or --file internal/domain/feature_metrics.go;
 these files are intentionally not part of the default managed set.
 The stable exporter feature adapter is intentionally compact:
 `internal/exporter/exporter.go` only imports the domain package, creates the
@@ -146,8 +146,11 @@ obsolete_files=(
   "internal/exporter/runtime_config_test.go"
   "internal/exporter/standard_metrics.go"
   "internal/__FEATURE_NAME__/collector.go"
+  "internal/__FEATURE_NAME__/collector_metrics.go"
   "internal/__FEATURE_NAME__/smoke.go"
   "internal/__FEATURE_NAME__/smoke_test.go"
+  "internal/__FEATURE_NAME__/snapshot.go"
+  "internal/__FEATURE_NAME__/snapshotter.go"
 )
 
 while [[ $# -gt 0 ]]; do

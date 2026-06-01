@@ -1,6 +1,7 @@
 include Makefile.mk
 
 .PHONY: help build release release-archives release-checksums release-smoke docker-build docker-buildx docker-buildx-push docker-push fmt fmt-check vet staticcheck test test-race coverage coverage-check smoke promtool-check compose compose-up compose-down compose-logs compose-config examples-check docker-smoke-build docker-smoke-image docker-smoke go-check check full-check clean
+.SILENT: compose compose-config compose-down compose-logs compose-up
 
 help: ## Show available make targets.
 	@printf "\033[33mUsage:\033[0m\n"

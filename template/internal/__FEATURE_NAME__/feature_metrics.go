@@ -7,13 +7,13 @@ import (
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/featurekit"
 )
 
-type Metrics struct {
+type FeatureMetrics struct {
 	featureName      string
 	exampleValueDesc *prometheus.Desc
 }
 
-func newMetrics(ctx featurekit.SnapshotMetricsContext[Snapshot]) featurekit.SnapshotMetrics[Snapshot] {
-	return &Metrics{
+func (Feature) NewMetrics(ctx featurekit.SnapshotMetricsContext[Snapshot]) featurekit.SnapshotMetrics[Snapshot] {
+	return &FeatureMetrics{
 		featureName: ctx.FeatureName,
 		exampleValueDesc: prometheus.NewDesc(
 			metricExampleValue(ctx.FeatureName),
@@ -24,11 +24,11 @@ func newMetrics(ctx featurekit.SnapshotMetricsContext[Snapshot]) featurekit.Snap
 	}
 }
 
-func (m *Metrics) Describe(ch chan<- *prometheus.Desc) {
+func (m *FeatureMetrics) Describe(ch chan<- *prometheus.Desc) {
 	ch <- m.exampleValueDesc
 }
 
-func (m *Metrics) Collect(ch chan<- prometheus.Metric, snapshot Snapshot, _ time.Time) {
+func (m *FeatureMetrics) Collect(ch chan<- prometheus.Metric, snapshot Snapshot, _ time.Time) {
 	if !snapshot.Success {
 		return
 	}

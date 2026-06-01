@@ -88,13 +88,13 @@ scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file intern
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/exporter.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/metrics.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/snapshot_types.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/collector_metrics.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/feature_metrics.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/collector_test_helpers_test.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/collector_snapshot_test.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/collector_refresh_test.go
 scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/collector_defaults_test.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/snapshot.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/snapshotter.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/feature_snapshot.go
+scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/feature_snapshotter.go
 ```
 
 Older exporters may still have scaffold-owned bootstrap files under

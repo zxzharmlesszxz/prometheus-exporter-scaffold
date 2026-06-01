@@ -8,7 +8,7 @@ import (
 	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
 )
 
-func (SnapshotGatherer) Snapshot(_ context.Context, now time.Time) Snapshot {
+func (FeatureSnapshotGatherer) Snapshot(_ context.Context, now time.Time) Snapshot {
 	return Snapshot{
 		AttemptTime: now,
 		Success:     true,
@@ -16,14 +16,14 @@ func (SnapshotGatherer) Snapshot(_ context.Context, now time.Time) Snapshot {
 	}
 }
 
-func snapshotStatus(snapshot Snapshot) framework.SnapshotStatus {
+func (Feature) SnapshotStatus(snapshot Snapshot) framework.SnapshotStatus {
 	return framework.SnapshotStatus{
 		AttemptTime: snapshot.AttemptTime,
 		Success:     snapshot.Success,
 	}
 }
 
-func (m *Metrics) LogSnapshotError(logger *slog.Logger, snapshot Snapshot) {
+func (m *FeatureMetrics) LogSnapshotError(logger *slog.Logger, snapshot Snapshot) {
 	if snapshot.Err != nil {
 		logger.Error(m.featureName+" data collection failed", "err", snapshot.Err)
 	}

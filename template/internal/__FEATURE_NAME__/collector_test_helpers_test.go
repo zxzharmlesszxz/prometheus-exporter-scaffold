@@ -48,12 +48,12 @@ func newTestCollectorWithNow(featureName string, namespace string, logger *slog.
 			Namespace:              namespace,
 			Logger:                 logger,
 			Snapshotter:            snapshotter,
-			DefaultSnapshotter:     SnapshotGatherer{},
+			DefaultSnapshotter:     NewFeatureContract().DefaultSnapshotter(),
 			RefreshInterval:        refreshInterval,
 			DefaultRefreshInterval: DefaultRefreshInterval,
-			StatusFunc:             snapshotStatus,
+			StatusFunc:             NewFeatureContract().SnapshotStatus,
 			Now:                    now,
 		},
-		MetricsFunc: newMetrics,
+		MetricsFunc: NewFeatureContract().NewMetrics,
 	})
 }
