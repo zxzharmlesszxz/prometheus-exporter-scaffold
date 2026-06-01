@@ -42,10 +42,7 @@ func newTestExporter() *featurekit.Feature[Config, Snapshot] {
 }
 
 func newTestExporterWithOptions(options featurekit.SpecOptions) *featurekit.Feature[Config, Snapshot] {
-	return featurekit.NewFeature(featurekit.NewContractSnapshotFeatureSpec[Config, Snapshot](
-		options,
-		NewFeatureContract(),
-	))
+	return NewFeature(options)
 }
 
 func newTestCollector(featureName string, namespace string, snapshotter framework.Snapshotter[Snapshot], refreshInterval time.Duration) framework.StartableCollector {

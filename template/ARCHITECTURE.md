@@ -7,17 +7,22 @@
 - `cmd`
   Minimal process entrypoint.
 - `internal/exporter`
-  Thin adapter that creates the framework contract-backed feature and delegates bootstrap metadata to the framework.
+  Thin adapter that asks the feature package for a contract-backed feature and
+  delegates bootstrap metadata to the framework.
 - `internal/__FEATURE_NAME__`
-  Concrete feature extension files for config, snapshot gathering, metric
-  descriptors, and typed snapshot-to-metrics behavior.
+  Concrete feature package. `feature.go` is the stable scaffold-compatible
+  contract shell; config defaults, snapshot gathering, metric descriptors, typed
+  snapshot-to-metrics behavior, and smoke additions live in adjacent feature
+  extension files.
 - `smoke`
   Binary smoke tests that build the real executable and verify CLI, HTTP, and metric behavior.
 
 ## Data Flow
 
 1. `cmd/main.go` delegates to `internal/exporter.Main()`, which runs `framework.MainFromInjectedProject(...)`.
-2. `internal/exporter` creates the concrete feature with framework `featurekit` contract builders and framework-injected feature metadata.
+2. `internal/exporter` creates the concrete feature through
+   `internal/__FEATURE_NAME__.NewFeature(...)` and framework-injected feature
+   metadata.
 3. Framework `featurekit.Feature` registers common flags such as `--__FEATURE_NAME__.refresh-interval` and delegates feature-specific behavior through the framework-owned feature contract.
 4. Framework `featurekit.Feature` builds a typed snapshotter and collector from the contract-backed spec, then registers and starts the collector.
 5. `framework.SnapshotCollector` refreshes data in a background worker every `--__FEATURE_NAME__.refresh-interval`; scrapes read the latest completed snapshot.

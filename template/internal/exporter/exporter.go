@@ -10,10 +10,7 @@ import (
 var mainFromInjectedProject = framework.MainFromInjectedProject
 
 func NewFeature() framework.Feature {
-	return featurekit.NewFeature(featurekit.NewContractSnapshotFeatureSpec[feature.Config, feature.Snapshot](
-		featurekit.SpecOptions{FeatureName: framework.InjectedFeatureName()},
-		feature.NewFeatureContract(),
-	))
+	return feature.NewFeature(featurekit.SpecOptions{FeatureName: framework.InjectedFeatureName()})
 }
 
 func Main() {

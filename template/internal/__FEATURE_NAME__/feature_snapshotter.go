@@ -1,3 +1,7 @@
 package __FEATURE_NAME__
 
 type FeatureSnapshotGatherer struct{}
+
+func NewDefaultSnapshotter() FeatureSnapshotGatherer {
+	return FeatureSnapshotGatherer{}
+}
