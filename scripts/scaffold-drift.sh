@@ -54,8 +54,13 @@ Default managed files:
   internal/exporter/exporter.go
   internal/exporter/exporter_test.go
   internal/__FEATURE_NAME__/collector_test_helpers_test.go
-  internal/__FEATURE_NAME__/exporter.go
   smoke/binary_test.go
+
+Framework version:
+  Check mode compares the target exporter's go.mod
+  github.com/zxzharmlesszxz/prometheus-exporter-framework version with the
+  scaffold version in template/go.mod. Older target versions are reported as
+  OUTDATED and make the check fail.
 
 Makefile should stay scaffold-managed. Domain-specific Docker smoke mounts,
 exporter arguments, and extra metric checks belong in Makefile.mk variables.
@@ -70,15 +75,15 @@ the framework.
 Domain-specific metric constants, metrics, snapshots, snapshotters, and
 collector tests should live outside the adapter package, normally under
 internal/<feature-name>.
-The scaffold-owned feature lifecycle is split from domain behavior. The files
-internal/<feature-name>/exporter.go and
+The scaffold-owned feature lifecycle is split from domain behavior. The file
 internal/<feature-name>/collector_test_helpers_test.go should stay identical to
-the rendered scaffold; collector construction belongs to framework featurekit,
-while domain behavior belongs in typed spec/config, metrics, snapshot, and
-lookup files.
+the rendered scaffold; feature construction and collector construction belong to
+framework featurekit, while domain behavior belongs in feature config, metrics,
+snapshot, and lookup files.
 Inspect domain-specific skeleton files with concrete rendered paths such as
---file internal/demo/spec.go or --file internal/domain/feature_metrics.go;
-these files are intentionally not part of the default managed set.
+--file internal/demo/feature_config.go or
+--file internal/domain/feature_metrics.go; these files are intentionally not
+part of the default managed set.
 The stable exporter feature adapter is intentionally compact:
 `internal/exporter/exporter.go` only imports the domain package, creates the
 feature with framework-injected metadata, and delegates Main()/ExporterInfo()
@@ -103,6 +108,7 @@ docker_smoke_run_options=""
 docker_smoke_exporter_args=""
 docker_smoke_extra_metrics=""
 custom_files=()
+framework_module="github.com/zxzharmlesszxz/prometheus-exporter-framework"
 
 default_files=(
   "LICENSE"
@@ -118,7 +124,6 @@ default_files=(
   "internal/exporter/exporter.go"
   "internal/exporter/exporter_test.go"
   "internal/__FEATURE_NAME__/collector_test_helpers_test.go"
-  "internal/__FEATURE_NAME__/exporter.go"
   "smoke/binary_test.go"
 )
 
@@ -147,10 +152,12 @@ obsolete_files=(
   "internal/exporter/standard_metrics.go"
   "internal/__FEATURE_NAME__/collector.go"
   "internal/__FEATURE_NAME__/collector_metrics.go"
+  "internal/__FEATURE_NAME__/exporter.go"
   "internal/__FEATURE_NAME__/smoke.go"
   "internal/__FEATURE_NAME__/smoke_test.go"
   "internal/__FEATURE_NAME__/snapshot.go"
   "internal/__FEATURE_NAME__/snapshotter.go"
+  "internal/__FEATURE_NAME__/spec.go"
 )
 
 while [[ $# -gt 0 ]]; do
@@ -259,6 +266,72 @@ fi
 detect_module() {
   [[ -f "$target_dir/go.mod" ]] || return 0
   awk '$1 == "module" {print $2; exit}' "$target_dir/go.mod"
+}
+
+detect_go_mod_required_version() {
+  local go_mod="$1"
+  local module="$2"
+  [[ -f "$go_mod" ]] || return 0
+  awk -v module="$module" '
+    $1 == "require" && $2 == module {
+      print $3
+      exit
+    }
+    $1 == module {
+      print $2
+      exit
+    }
+  ' "$go_mod"
+}
+
+version_core() {
+  local version="$1"
+  version="${version#v}"
+  version="${version%%+*}"
+  version="${version%%-*}"
+  printf '%s' "$version"
+}
+
+compare_versions() {
+  local left right left_core right_core
+  local left_major left_minor left_patch right_major right_minor right_patch
+  left="$1"
+  right="$2"
+
+  if [[ "$left" == "$right" ]]; then
+    echo "equal"
+    return 0
+  fi
+
+  left_core="$(version_core "$left")"
+  right_core="$(version_core "$right")"
+  if [[ ! "$left_core" =~ ^[0-9]+(\.[0-9]+){0,2}$ || ! "$right_core" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]]; then
+    echo "unknown"
+    return 0
+  fi
+
+  IFS=. read -r left_major left_minor left_patch <<<"$left_core"
+  IFS=. read -r right_major right_minor right_patch <<<"$right_core"
+  left_minor="${left_minor:-0}"
+  left_patch="${left_patch:-0}"
+  right_minor="${right_minor:-0}"
+  right_patch="${right_patch:-0}"
+
+  if (( left_major < right_major )); then
+    echo "older"
+  elif (( left_major > right_major )); then
+    echo "newer"
+  elif (( left_minor < right_minor )); then
+    echo "older"
+  elif (( left_minor > right_minor )); then
+    echo "newer"
+  elif (( left_patch < right_patch )); then
+    echo "older"
+  elif (( left_patch > right_patch )); then
+    echo "newer"
+  else
+    echo "unknown"
+  fi
 }
 
 detect_project_name() {
@@ -918,6 +991,25 @@ format_rendered_go() {
 
 format_rendered_go
 
+target_framework_version="$(detect_go_mod_required_version "$target_dir/go.mod" "$framework_module")"
+current_framework_version="$(detect_go_mod_required_version "$repo_dir/template/go.mod" "$framework_module")"
+framework_issue=""
+framework_drift=0
+if [[ -n "$current_framework_version" && -z "$target_framework_version" ]]; then
+  framework_issue="MISSING framework $framework_module: target go.mod does not require it; scaffold expects $current_framework_version"
+  framework_drift=1
+elif [[ -n "$current_framework_version" && -n "$target_framework_version" ]]; then
+  framework_compare="$(compare_versions "$target_framework_version" "$current_framework_version")"
+  if [[ "$framework_compare" == "older" ]]; then
+    framework_issue="OUTDATED framework $framework_module: target uses $target_framework_version; scaffold expects $current_framework_version"
+    framework_drift=1
+  elif [[ "$framework_compare" == "newer" ]]; then
+    framework_issue="NEWER framework $framework_module: target uses $target_framework_version; scaffold expects $current_framework_version"
+  elif [[ "$framework_compare" == "unknown" && "$target_framework_version" != "$current_framework_version" ]]; then
+    framework_issue="DIFFERENT framework $framework_module: target uses $target_framework_version; scaffold expects $current_framework_version"
+  fi
+fi
+
 printf 'Scaffold metadata:\n'
 printf '  target:       %s\n' "$target_dir"
 printf '  project-name: %s\n' "$project_name"
@@ -926,6 +1018,7 @@ printf '  description:  %s\n' "$project_desc"
 printf '  feature-name: %s\n' "$feature_name"
 printf '  namespace:    %s\n' "$metric_namespace"
 printf '  port:         %s\n' "$default_port"
+printf '  framework:    %s (scaffold: %s)\n' "${target_framework_version:-<missing>}" "${current_framework_version:-<unknown>}"
 printf '  smoke-metric: %s\n' "$docker_smoke_metric"
 printf '  smoke-run-options: %s\n' "${docker_smoke_run_options:-<empty>}"
 printf '  smoke-exporter-args: %s\n' "${docker_smoke_exporter_args:-<empty>}"
@@ -943,6 +1036,13 @@ fi
 
 drift=0
 echo
+if [[ -n "$framework_issue" ]]; then
+  echo "$framework_issue"
+  if [[ "$framework_drift" -ne 0 ]]; then
+    drift=1
+  fi
+fi
+
 for file in "${managed_files[@]}"; do
   rendered_file="$rendered_dir/$file"
   target_file="$target_dir/$file"

@@ -21,14 +21,14 @@ behavior in the framework and keep generated-project boilerplate here.
 ## Render A New Exporter
 
 ```bash
-scripts/render.sh \
-  --project-name prometheus-demo-exporter \
-  --module github.com/example/prometheus-demo-exporter \
-  --description "Prometheus Demo Exporter" \
-  --feature-name demo \
-  --namespace demo_exporter \
-  --port 9888 \
-  --target-dir /tmp/prometheus-demo-exporter
+make new-exporter \
+  PROJECT_NAME=prometheus-demo-exporter \
+  GO_MODULE=github.com/example/prometheus-demo-exporter \
+  PROJECT_DESC="Prometheus Demo Exporter" \
+  FEATURE_NAME=demo \
+  METRIC_NAMESPACE=demo_exporter \
+  DEFAULT_PORT=9888 \
+  TARGET_DIR=/tmp/prometheus-demo-exporter
 ```
 
 Then validate the generated repository:
@@ -40,9 +40,14 @@ make go-check
 make check
 ```
 
-`--feature-name`, `--namespace`, `--description`, `--module`, and `--port`
-have defaults, but passing them explicitly keeps the generated repository
-predictable.
+`FEATURE_NAME`, `METRIC_NAMESPACE`, `PROJECT_DESC`, `GO_MODULE`, and
+`DEFAULT_PORT` have defaults, but passing them explicitly keeps the generated
+repository predictable.
+
+`TARGET_DIR` defaults to `rendered/$(PROJECT_NAME)` for local experiments.
+Run `make check` in this scaffold repository to render a demo exporter, check
+for unresolved placeholders, verify scaffold drift, and run generated Go-only
+checks.
 
 The generated `cmd/main.go` is intentionally stable. Project metadata is
 injected by Makefile linker flags from `Makefile.mk`, while the concrete feature
@@ -65,13 +70,13 @@ Existing exporters are not coupled to this repository after rendering. To check
 or sync scaffold-owned files against the current template, run:
 
 ```bash
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter
+make drift-check TARGET_DIR=../prometheus-demo-exporter
 ```
 
 To update the default managed files:
 
 ```bash
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --sync
+make drift-sync TARGET_DIR=../prometheus-demo-exporter
 ```
 
 The default managed set is intentionally conservative: CI files, ignore files,
@@ -82,20 +87,30 @@ Concrete exporters keep domain logic in their rendered feature package, normally
 syncing them:
 
 ```bash
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file Makefile
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file Dockerfile
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/exporter/exporter.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/exporter.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/metrics.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/snapshot_types.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/feature_metrics.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/collector_test_helpers_test.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/collector_snapshot_test.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/collector_refresh_test.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/collector_defaults_test.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/feature_snapshot.go
-scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --file internal/demo/feature_snapshotter.go
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=Makefile
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=Dockerfile
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/exporter/exporter.go
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/metrics.go
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/snapshot_types.go
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature.go
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_config.go
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_metrics.go
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/collector_test_helpers_test.go
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/collector_snapshot_test.go
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/collector_refresh_test.go
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/collector_defaults_test.go
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_snapshot.go
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_snapshotter.go
 ```
+
+Use `ALLOW_DIRTY=1` with `make drift-sync` when you intentionally want to sync
+over already modified managed files. `make drift-list-files` prints the default
+managed set.
+
+`make drift-check` also compares the target exporter's
+`prometheus-exporter-framework` requirement in `go.mod` with the scaffold
+version from `template/go.mod`. If the target exporter uses an older framework,
+the check prints an `OUTDATED framework ...` line and exits non-zero.
 
 Older exporters may still have scaffold-owned bootstrap files under
 `internal/exporter`, such as `defaults.go`, `feature.go`, `info.go`,
