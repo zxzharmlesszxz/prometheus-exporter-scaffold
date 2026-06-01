@@ -8,6 +8,7 @@ import (
 
 	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/exportertest"
+	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/featurekit"
 )
 
 func TestExporterContract(t *testing.T) {
@@ -15,7 +16,7 @@ func TestExporterContract(t *testing.T) {
 
 	exportertest.RunFeatureContract(t, exportertest.FeatureContractConfig{
 		NewFeature: func() exportertest.FeatureContractFeature {
-			return NewExporter(ExporterOptions{FeatureName: testFeatureName})
+			return newTestExporter()
 		},
 		FeatureContext: testFeatureContext(),
 		FlagArgs: []string{
@@ -29,10 +30,10 @@ func TestExporterContract(t *testing.T) {
 	})
 }
 
-func TestNewExporterDefaults(t *testing.T) {
+func TestContractFeatureDefaults(t *testing.T) {
 	t.Parallel()
 
-	exporter := NewExporter(ExporterOptions{})
+	exporter := newTestExporterWithOptions(featurekit.SpecOptions{})
 	config := exporter.RuntimeConfig()
 	if got := exportertest.RuntimeConfigValue(t, config, "refresh_interval"); got != DefaultRefreshInterval {
 		t.Fatalf("refresh_interval = %v, want %v", got, DefaultRefreshInterval)
@@ -42,8 +43,7 @@ func TestNewExporterDefaults(t *testing.T) {
 func TestExporterSmokeSpecIncludesSkeletonMetric(t *testing.T) {
 	t.Parallel()
 
-	exporter := NewExporter(ExporterOptions{FeatureName: testFeatureName})
-	spec := exporter.SmokeSpec()
+	spec := newTestExporter().SmokeSpec()
 	want := metricExampleValue(testFeatureName) + " 1"
 	for _, metric := range spec.WantMetrics {
 		if metric == want {

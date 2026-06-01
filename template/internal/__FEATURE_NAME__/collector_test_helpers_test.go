@@ -37,6 +37,17 @@ func (s *fakeSnapshotter) set(snapshot Snapshot) {
 	s.snapshot.Store(snapshot)
 }
 
+func newTestExporter() *featurekit.Feature[Config, Snapshot] {
+	return newTestExporterWithOptions(featurekit.SpecOptions{FeatureName: testFeatureName})
+}
+
+func newTestExporterWithOptions(options featurekit.SpecOptions) *featurekit.Feature[Config, Snapshot] {
+	return featurekit.NewFeature(featurekit.NewContractSnapshotFeatureSpec[Config, Snapshot](
+		options,
+		NewFeatureContract(),
+	))
+}
+
 func newTestCollector(featureName string, namespace string, snapshotter framework.Snapshotter[Snapshot], refreshInterval time.Duration) framework.StartableCollector {
 	return newTestCollectorWithNow(featureName, namespace, nil, snapshotter, refreshInterval, nil)
 }

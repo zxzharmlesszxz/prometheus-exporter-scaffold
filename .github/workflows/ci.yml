@@ -27,34 +27,5 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Check script syntax
-        run: |
-          bash -n scripts/render.sh
-          bash -n scripts/scaffold-drift.sh
-
-      - name: Render demo exporter
-        run: |
-          tmp="$(mktemp -d)"
-          echo "RENDERED_EXPORTER=$tmp" >> "$GITHUB_ENV"
-
-          scripts/render.sh \
-            --project-name prometheus-demo-exporter \
-            --module github.com/zxzharmlesszxz/prometheus-demo-exporter \
-            --description "Prometheus Demo Exporter" \
-            --feature-name demo \
-            --namespace demo_exporter \
-            --port 9888 \
-            --target-dir "$tmp"
-
-      - name: Check rendered placeholders
-        run: |
-          if grep -R -n -E '__[A-Z0-9_]+__' "$RENDERED_EXPORTER"; then
-            echo "rendered exporter still contains scaffold placeholders" >&2
-            exit 1
-          fi
-
-      - name: Run generated Go checks
-        run: |
-          cd "$RENDERED_EXPORTER"
-          go mod tidy
-          make go-check GO=go GOFMT=gofmt
+      - name: Run scaffold checks
+        run: make check GO=go GOFMT=gofmt
