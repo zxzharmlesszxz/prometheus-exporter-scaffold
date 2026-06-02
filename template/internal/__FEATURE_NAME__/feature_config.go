@@ -29,6 +29,7 @@ func NewFeatureSpec() FeatureSpec {
 		DefaultSnapshotter: NewDefaultSnapshotter(),
 		MetricsFunc:        NewFeatureMetrics,
 		StatusFunc:         FeatureSnapshotStatus,
+		RuntimeConfigFunc:  FeatureRuntimeConfig,
 		SmokeFunc:          FeatureSmokeSpec,
 	}
 }
@@ -44,6 +45,14 @@ func NewFeatureSnapshotter(ctx featurekit.CollectorContext[Config]) (framework.S
 		return nil, err
 	}
 	return FeatureSnapshotGatherer{}, nil
+}
+
+func FeatureRuntimeConfig(ctx featurekit.RuntimeConfigContext[Config]) []any {
+	configFile, loaded, _ := resolveConfig(ctx.FeatureName, ctx.Config)
+	return []any{
+		"config_file", configFile,
+		"config_file_loaded", loaded,
+	}
 }
 
 func FeatureSmokeSpec(ctx featurekit.SmokeContext[Config]) featurekit.SmokeSpec {

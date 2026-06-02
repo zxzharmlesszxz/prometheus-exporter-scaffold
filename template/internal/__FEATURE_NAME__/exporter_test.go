@@ -20,7 +20,9 @@ func TestExporterContract(t *testing.T) {
 			"--" + testFeatureName + ".refresh-interval=30s",
 		},
 		WantRuntimeConfig: map[string]any{
-			"refresh_interval": 30 * time.Second,
+			"refresh_interval":   30 * time.Second,
+			"config_file":        defaultFeatureConfigFile(testFeatureName),
+			"config_file_loaded": false,
 		},
 		DuplicateRegistration:       true,
 		LastCollectionSuccessMetric: testLastSuccess,
@@ -42,6 +44,13 @@ func TestContractFeatureDefaults(t *testing.T) {
 	config := exporter.RuntimeConfig()
 	if got := exportertest.RuntimeConfigValue(t, config, "refresh_interval"); got != DefaultRefreshInterval {
 		t.Fatalf("refresh_interval = %v, want %v", got, DefaultRefreshInterval)
+	}
+	wantConfigFile := defaultFeatureConfigFile("")
+	if got := exportertest.RuntimeConfigValue(t, config, "config_file"); got != wantConfigFile {
+		t.Fatalf("config_file = %q, want %q", got, wantConfigFile)
+	}
+	if got := exportertest.RuntimeConfigValue(t, config, "config_file_loaded"); got != false {
+		t.Fatalf("config_file_loaded = %v, want false", got)
 	}
 }
 
