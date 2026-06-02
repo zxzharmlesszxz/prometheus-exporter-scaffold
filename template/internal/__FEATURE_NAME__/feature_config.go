@@ -15,11 +15,11 @@ func NewDefaultConfig() Config {
 	return Config{}
 }
 
-func (Feature) NewSnapshotter(featurekit.CollectorContext[Config]) (framework.Snapshotter[Snapshot], error) {
+func (FeatureExtension) NewSnapshotter(featurekit.CollectorContext[Config]) (framework.Snapshotter[Snapshot], error) {
 	return FeatureSnapshotGatherer{}, nil
 }
 
-func (Feature) SmokeSpec(ctx featurekit.SmokeContext[Config]) featurekit.SmokeSpec {
+func (FeatureExtension) SmokeSpec(ctx featurekit.SmokeContext[Config]) featurekit.SmokeSpec {
 	return featurekit.SmokeSpec{
 		WantMetrics: []string{metricExampleValue(ctx.FeatureName) + " 1"},
 	}

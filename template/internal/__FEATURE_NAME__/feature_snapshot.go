@@ -16,7 +16,7 @@ func (FeatureSnapshotGatherer) Snapshot(_ context.Context, now time.Time) Snapsh
 	}
 }
 
-func (Feature) SnapshotStatus(snapshot Snapshot) framework.SnapshotStatus {
+func (FeatureExtension) SnapshotStatus(snapshot Snapshot) framework.SnapshotStatus {
 	return framework.SnapshotStatus{
 		AttemptTime: snapshot.AttemptTime,
 		Success:     snapshot.Success,

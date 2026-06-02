@@ -7,12 +7,20 @@ import (
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/featurekit"
 )
 
-type Feature struct {
+// Feature is the standard contract implemented by a concrete exporter feature.
+type Feature interface {
+	featurekit.FeatureContract[Config, Snapshot]
+}
+
+// FeatureExtension carries this exporter's feature-specific method overrides.
+type FeatureExtension struct {
 	featurekit.FeatureDefaults[Config, Snapshot]
 }
 
-func NewFeatureContract() featurekit.FeatureContract[Config, Snapshot] {
-	return Feature{}
+var _ Feature = FeatureExtension{}
+
+func NewFeatureContract() Feature {
+	return FeatureExtension{}
 }
 
 func NewFeature(options featurekit.SpecOptions) *featurekit.Feature[Config, Snapshot] {
@@ -22,14 +30,14 @@ func NewFeature(options featurekit.SpecOptions) *featurekit.Feature[Config, Snap
 	))
 }
 
-func (Feature) DefaultRefreshInterval() time.Duration {
+func (FeatureExtension) DefaultRefreshInterval() time.Duration {
 	return DefaultRefreshInterval
 }
 
-func (Feature) DefaultConfig() Config {
+func (FeatureExtension) DefaultConfig() Config {
 	return NewDefaultConfig()
 }
 
-func (Feature) DefaultSnapshotter() framework.Snapshotter[Snapshot] {
+func (FeatureExtension) DefaultSnapshotter() framework.Snapshotter[Snapshot] {
 	return NewDefaultSnapshotter()
 }
