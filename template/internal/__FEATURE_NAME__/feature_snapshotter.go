@@ -1,30 +1,31 @@
 package __FEATURE_NAME__
 
 import (
-	"context"
-	"time"
-
 	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/featurekit"
 )
 
-type FeatureSnapshotGatherer struct{}
+type FeatureSnapshotterFactory func(featurekit.CollectorContext[Config]) (framework.Snapshotter[Snapshot], error)
 
-func NewDefaultSnapshotter() FeatureSnapshotGatherer {
-	return FeatureSnapshotGatherer{}
+type FeatureSnapshotterSpec struct {
+	factory            FeatureSnapshotterFactory
+	defaultSnapshotter framework.Snapshotter[Snapshot]
 }
 
-func NewFeatureSnapshotter(ctx featurekit.CollectorContext[Config]) (framework.Snapshotter[Snapshot], error) {
-	if _, _, _, err := ResolveFeatureConfig(ctx.FeatureName, ctx.Config); err != nil {
-		return nil, err
+func NewFeatureSnapshotterSpec(factory FeatureSnapshotterFactory, defaultSnapshotter framework.Snapshotter[Snapshot]) FeatureSnapshotterSpec {
+	return FeatureSnapshotterSpec{
+		factory:            factory,
+		defaultSnapshotter: defaultSnapshotter,
 	}
-	return FeatureSnapshotGatherer{}, nil
 }
 
-func (FeatureSnapshotGatherer) Snapshot(_ context.Context, now time.Time) Snapshot {
-	return Snapshot{
-		AttemptTime: now,
-		Success:     true,
-		Value:       1,
+func (s FeatureSnapshotterSpec) New(ctx featurekit.CollectorContext[Config]) (framework.Snapshotter[Snapshot], error) {
+	if s.factory == nil {
+		return nil, nil
 	}
+	return s.factory(ctx)
+}
+
+func (s FeatureSnapshotterSpec) DefaultSnapshotter() framework.Snapshotter[Snapshot] {
+	return s.defaultSnapshotter
 }

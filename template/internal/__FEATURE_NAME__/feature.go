@@ -28,44 +28,6 @@ type FeatureSpec struct {
 	smoke           FeatureSmokeSpec
 }
 
-type FeatureSnapshotSpec struct {
-	statusFunc func(Snapshot) framework.SnapshotStatus
-}
-
-func NewFeatureSnapshotSpec(statusFunc func(Snapshot) framework.SnapshotStatus) FeatureSnapshotSpec {
-	return FeatureSnapshotSpec{statusFunc: statusFunc}
-}
-
-func (s FeatureSnapshotSpec) Status(snapshot Snapshot) framework.SnapshotStatus {
-	if s.statusFunc == nil {
-		return framework.SnapshotStatus{}
-	}
-	return s.statusFunc(snapshot)
-}
-
-type FeatureSnapshotterSpec struct {
-	factory            func(featurekit.CollectorContext[Config]) (framework.Snapshotter[Snapshot], error)
-	defaultSnapshotter framework.Snapshotter[Snapshot]
-}
-
-func NewFeatureSnapshotterSpec(factory func(featurekit.CollectorContext[Config]) (framework.Snapshotter[Snapshot], error), defaultSnapshotter framework.Snapshotter[Snapshot]) FeatureSnapshotterSpec {
-	return FeatureSnapshotterSpec{
-		factory:            factory,
-		defaultSnapshotter: defaultSnapshotter,
-	}
-}
-
-func (s FeatureSnapshotterSpec) New(ctx featurekit.CollectorContext[Config]) (framework.Snapshotter[Snapshot], error) {
-	if s.factory == nil {
-		return nil, nil
-	}
-	return s.factory(ctx)
-}
-
-func (s FeatureSnapshotterSpec) DefaultSnapshotter() framework.Snapshotter[Snapshot] {
-	return s.defaultSnapshotter
-}
-
 type FeatureSmokeSpec struct {
 	factory func(featurekit.SmokeContext[Config]) featurekit.SmokeSpec
 }
