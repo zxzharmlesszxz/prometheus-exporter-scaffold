@@ -1,6 +1,9 @@
 package __FEATURE_NAME__
 
 import (
+	"context"
+	"time"
+
 	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/featurekit"
 )
@@ -16,4 +19,12 @@ func NewFeatureSnapshotter(ctx featurekit.CollectorContext[Config]) (framework.S
 		return nil, err
 	}
 	return FeatureSnapshotGatherer{}, nil
+}
+
+func (FeatureSnapshotGatherer) Snapshot(_ context.Context, now time.Time) Snapshot {
+	return Snapshot{
+		AttemptTime: now,
+		Success:     true,
+		Value:       1,
+	}
 }

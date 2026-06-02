@@ -56,6 +56,7 @@ Default managed files:
   internal/__FEATURE_NAME__/feature.go
   internal/__FEATURE_NAME__/feature_config.go
   internal/__FEATURE_NAME__/feature_metrics.go
+  internal/__FEATURE_NAME__/feature_snapshot.go
   internal/__FEATURE_NAME__/collector_test_helpers_test.go
   smoke/binary_test.go
 
@@ -80,12 +81,14 @@ collector tests should live outside the adapter package, normally under
 internal/<feature-name>.
 The scaffold-owned feature lifecycle is split from domain behavior. The files
 internal/<feature-name>/feature.go, internal/<feature-name>/feature_config.go,
-and internal/<feature-name>/feature_metrics.go define the stable feature,
-config, and metrics contracts, while internal/<feature-name>/collector_test_helpers_test.go
-defines shared feature test helpers. These files should stay identical to the
-rendered scaffold; feature construction and collector construction belong to
-framework featurekit, while domain behavior belongs in feature config extension,
-feature metrics extension, snapshot, and lookup files.
+internal/<feature-name>/feature_metrics.go, and
+internal/<feature-name>/feature_snapshot.go define the stable feature, config,
+metrics, and snapshot status contracts, while
+internal/<feature-name>/collector_test_helpers_test.go defines shared feature
+test helpers. These files should stay identical to the rendered scaffold;
+feature construction and collector construction belong to framework featurekit,
+while domain behavior belongs in feature config extension, feature metrics
+extension, snapshotter, and lookup files.
 Inspect domain-specific skeleton files with concrete rendered paths such as
 --file internal/demo/feature_config_ext.go or
 --file internal/domain/feature_metrics_ext.go; these files are intentionally not
@@ -132,6 +135,7 @@ default_files=(
   "internal/__FEATURE_NAME__/feature.go"
   "internal/__FEATURE_NAME__/feature_config.go"
   "internal/__FEATURE_NAME__/feature_metrics.go"
+  "internal/__FEATURE_NAME__/feature_snapshot.go"
   "internal/__FEATURE_NAME__/collector_test_helpers_test.go"
   "smoke/binary_test.go"
 )
