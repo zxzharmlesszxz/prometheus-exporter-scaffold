@@ -1,12 +1,9 @@
 package __FEATURE_NAME__
 
 import (
-	"io"
-	"log/slog"
 	"testing"
 	"time"
 
-	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/exportertest"
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/featurekit"
 )
@@ -51,12 +48,4 @@ func TestExporterSmokeSpecIncludesSkeletonMetric(t *testing.T) {
 		}
 	}
 	t.Fatalf("SmokeSpec().WantMetrics = %v, want %q", spec.WantMetrics, want)
-}
-
-func testFeatureContext() framework.FeatureContext {
-	return framework.FeatureContext{
-		Logger:       slog.New(slog.NewTextHandler(io.Discard, nil)),
-		ExporterName: "__PROJECT_NAME__",
-		Namespace:    testMetricNamespace,
-	}
 }

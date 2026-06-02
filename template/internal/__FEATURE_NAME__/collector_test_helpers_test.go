@@ -2,6 +2,7 @@ package __FEATURE_NAME__
 
 import (
 	"context"
+	"io"
 	"log/slog"
 	"reflect"
 	"sync/atomic"
@@ -16,6 +17,7 @@ import (
 const (
 	testFeatureName      = "__FEATURE_NAME__"
 	testMetricNamespace  = "__METRIC_NAMESPACE__"
+	testExporterName     = "__PROJECT_NAME__"
 	testRefreshInterval  = time.Minute
 	testLastSuccess      = testMetricNamespace + "_last_collection_success"
 	testLastTimestamp    = testMetricNamespace + "_last_collection_timestamp_seconds"
@@ -46,6 +48,14 @@ func newTestExporter() *featurekit.Feature[Config, Snapshot] {
 
 func newTestExporterWithOptions(options featurekit.SpecOptions) *featurekit.Feature[Config, Snapshot] {
 	return NewFeature(options)
+}
+
+func testFeatureContext() framework.FeatureContext {
+	return framework.FeatureContext{
+		Logger:       slog.New(slog.NewTextHandler(io.Discard, nil)),
+		ExporterName: testExporterName,
+		Namespace:    testMetricNamespace,
+	}
 }
 
 func newTestCollector(featureName string, namespace string, snapshotter framework.Snapshotter[Snapshot], refreshInterval time.Duration) framework.StartableCollector {
