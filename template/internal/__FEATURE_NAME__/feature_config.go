@@ -15,11 +15,23 @@ func NewDefaultConfig() Config {
 	return Config{}
 }
 
-func (FeatureExtension) NewSnapshotter(featurekit.CollectorContext[Config]) (framework.Snapshotter[Snapshot], error) {
+func NewFeatureSpec() FeatureSpec {
+	return FeatureSpec{
+		RefreshInterval:    DefaultRefreshInterval,
+		Config:             NewDefaultConfig(),
+		NewSnapshotterFunc: NewFeatureSnapshotter,
+		DefaultSnapshotter: NewDefaultSnapshotter(),
+		MetricsFunc:        NewFeatureMetrics,
+		StatusFunc:         FeatureSnapshotStatus,
+		SmokeFunc:          FeatureSmokeSpec,
+	}
+}
+
+func NewFeatureSnapshotter(featurekit.CollectorContext[Config]) (framework.Snapshotter[Snapshot], error) {
 	return FeatureSnapshotGatherer{}, nil
 }
 
-func (FeatureExtension) SmokeSpec(ctx featurekit.SmokeContext[Config]) featurekit.SmokeSpec {
+func FeatureSmokeSpec(ctx featurekit.SmokeContext[Config]) featurekit.SmokeSpec {
 	return featurekit.SmokeSpec{
 		WantMetrics: []string{metricExampleValue(ctx.FeatureName) + " 1"},
 	}

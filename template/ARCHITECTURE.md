@@ -10,10 +10,11 @@
   Thin adapter that asks the feature package for a contract-backed feature and
   delegates bootstrap metadata to the framework.
 - `internal/__FEATURE_NAME__`
-  Concrete feature package. `feature.go` defines the stable scaffold-compatible
-  `Feature` interface and `FeatureExtension` implementation shell; config
-  defaults, snapshot gathering, metric descriptors, typed snapshot-to-metrics
-  behavior, and smoke additions live in adjacent feature extension files.
+  Concrete feature package. `feature.go` owns the stable scaffold-compatible
+  `Feature` interface, `FeatureExtension`, `FeatureSpec`, constructors, and
+  standard forwarding methods such as flag, snapshotter, metrics, runtime
+  config, and smoke registration. Feature-specific defaults and hook functions
+  live in adjacent feature files and are wired through `NewFeatureSpec()`.
 - `smoke`
   Binary smoke tests that build the real executable and verify CLI, HTTP, and metric behavior.
 
