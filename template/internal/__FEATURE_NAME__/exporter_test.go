@@ -31,6 +31,7 @@ func TestContractFeatureDefaults(t *testing.T) {
 	t.Parallel()
 
 	exporter := newTestExporterWithOptions(featurekit.SpecOptions{})
+	parseExporterFlags(t, exporter, []string{})
 	config := exporter.RuntimeConfig()
 	if got := exportertest.RuntimeConfigValue(t, config, "refresh_interval"); got != DefaultRefreshInterval {
 		t.Fatalf("refresh_interval = %v, want %v", got, DefaultRefreshInterval)
@@ -42,10 +43,7 @@ func TestExporterSmokeSpecIncludesSkeletonMetric(t *testing.T) {
 
 	spec := newTestExporter().SmokeSpec()
 	want := metricExampleValue(testFeatureName) + " 1"
-	for _, metric := range spec.WantMetrics {
-		if metric == want {
-			return
-		}
+	if !hasString(spec.WantMetrics, want) {
+		t.Fatalf("SmokeSpec().WantMetrics = %v, want %q", spec.WantMetrics, want)
 	}
-	t.Fatalf("SmokeSpec().WantMetrics = %v, want %q", spec.WantMetrics, want)
 }

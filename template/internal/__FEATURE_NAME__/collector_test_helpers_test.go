@@ -11,6 +11,7 @@ import (
 
 	"github.com/alecthomas/kingpin/v2"
 	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
+	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/exportertest"
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/featurekit"
 )
 
@@ -56,6 +57,21 @@ func testFeatureContext() framework.FeatureContext {
 		ExporterName: testExporterName,
 		Namespace:    testMetricNamespace,
 	}
+}
+
+func parseExporterFlags(t *testing.T, exporter *featurekit.Feature[Config, Snapshot], args []string) {
+	t.Helper()
+
+	exportertest.ParseFeatureFlags(t, exporter, args)
+}
+
+func hasString(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
 }
 
 func newTestCollector(featureName string, namespace string, snapshotter framework.Snapshotter[Snapshot], refreshInterval time.Duration) framework.StartableCollector {
