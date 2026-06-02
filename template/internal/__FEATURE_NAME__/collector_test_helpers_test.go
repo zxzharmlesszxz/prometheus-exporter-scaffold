@@ -87,6 +87,18 @@ func startTestCollector(t *testing.T, collector framework.StartableCollector) *p
 	return registry
 }
 
+func registerTestFeatureCollectors(t *testing.T, feature interface {
+	RegisterCollectors(framework.FeatureContext, *prometheus.Registry) error
+}) *prometheus.Registry {
+	t.Helper()
+
+	registry := prometheus.NewRegistry()
+	if err := feature.RegisterCollectors(testFeatureContext(), registry); err != nil {
+		t.Fatalf("RegisterCollectors() error = %v", err)
+	}
+	return registry
+}
+
 func newTestCollector(featureName string, namespace string, snapshotter framework.Snapshotter[Snapshot], refreshInterval time.Duration) framework.StartableCollector {
 	return newTestCollectorWithNow(featureName, namespace, nil, snapshotter, refreshInterval, nil)
 }

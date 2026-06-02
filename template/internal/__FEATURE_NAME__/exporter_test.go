@@ -27,6 +27,13 @@ func TestExporterContract(t *testing.T) {
 	})
 }
 
+func TestExporterRegistersCollectors(t *testing.T) {
+	t.Parallel()
+
+	registry := registerTestFeatureCollectors(t, newTestExporter())
+	exportertest.WaitForMetricValue(t, registry, testLastSuccess, nil, 1)
+}
+
 func TestContractFeatureDefaults(t *testing.T) {
 	t.Parallel()
 
