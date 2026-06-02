@@ -1,11 +1,17 @@
 package __FEATURE_NAME__
 
 import (
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/alecthomas/kingpin/v2"
 	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/featurekit"
+	"go.yaml.in/yaml/v2"
 )
 
 // Feature is the standard contract implemented by a concrete exporter feature.
@@ -107,4 +113,32 @@ func (f FeatureExtension) SmokeSpec(ctx featurekit.SmokeContext[Config]) feature
 		return featurekit.SmokeSpec{}
 	}
 	return f.spec.SmokeFunc(ctx)
+}
+
+func defaultFeatureConfigFile(featureName string) string {
+	name := strings.TrimSpace(featureName)
+	if name == "" {
+		name = "exporter"
+	}
+	return filepath.Join("/etc/prometheus", "prometheus-"+name+"-exporter.yml")
+}
+
+func loadFeatureConfigFile(featureName string, explicitPath string, target any) (string, bool, error) {
+	path := strings.TrimSpace(explicitPath)
+	required := path != ""
+	if path == "" {
+		path = defaultFeatureConfigFile(featureName)
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if !required && errors.Is(err, os.ErrNotExist) {
+			return path, false, nil
+		}
+		return path, false, fmt.Errorf("read %s config file %q: %w", featureName, path, err)
+	}
+	if err := yaml.UnmarshalStrict(data, target); err != nil {
+		return path, false, fmt.Errorf("parse %s config file %q: %w", featureName, path, err)
+	}
+	return path, true, nil
 }

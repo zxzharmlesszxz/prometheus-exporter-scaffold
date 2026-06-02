@@ -15,6 +15,7 @@ make build
 Useful flags:
 
 ```bash
+--__FEATURE_NAME__.config-file
 --__FEATURE_NAME__.refresh-interval
 --web.listen-address
 --web.telemetry-path
@@ -24,6 +25,7 @@ Useful flags:
 ```
 
 By default, the exporter listens on `:__DEFAULT_PORT__` and refreshes data every `1m`.
+If `/etc/prometheus/prometheus-__FEATURE_NAME__-exporter.yml` exists, it is loaded as the feature config file; if it is missing, defaults and flags are used.
 Data refresh runs through the template snapshot collector in a background worker; scrapes return the last collected snapshot.
 
 ## Metrics
