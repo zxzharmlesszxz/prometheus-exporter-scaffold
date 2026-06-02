@@ -20,7 +20,9 @@
   `feature_metrics_ext.go`. `feature_snapshot.go` owns the stable snapshot
   status contract. `feature_snapshotter.go` owns the stable snapshotter factory
   contract, while feature-specific snapshot gathering lives in
-  `feature_snapshotter_ext.go`.
+  `feature_snapshotter_ext.go`. `feature_smoke.go` owns the stable smoke spec
+  contract, while feature-specific smoke args and metric expectations live in
+  `feature_smoke_ext.go`.
   Feature-specific defaults and hook functions live in adjacent feature files
   and are wired through `NewFeatureSpec()`.
 - `smoke`

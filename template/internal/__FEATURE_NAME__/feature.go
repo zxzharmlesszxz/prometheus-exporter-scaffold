@@ -28,21 +28,6 @@ type FeatureSpec struct {
 	smoke           FeatureSmokeSpec
 }
 
-type FeatureSmokeSpec struct {
-	factory func(featurekit.SmokeContext[Config]) featurekit.SmokeSpec
-}
-
-func NewFeatureSmokeSpec(factory func(featurekit.SmokeContext[Config]) featurekit.SmokeSpec) FeatureSmokeSpec {
-	return FeatureSmokeSpec{factory: factory}
-}
-
-func (s FeatureSmokeSpec) New(ctx featurekit.SmokeContext[Config]) featurekit.SmokeSpec {
-	if s.factory == nil {
-		return featurekit.SmokeSpec{}
-	}
-	return s.factory(ctx)
-}
-
 func (s FeatureSpec) DefaultRefreshInterval() time.Duration {
 	return s.refreshInterval
 }

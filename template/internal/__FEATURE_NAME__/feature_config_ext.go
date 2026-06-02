@@ -25,12 +25,6 @@ func FeatureRuntimeConfigEntries(featurekit.RuntimeConfigContext[Config], Config
 	return nil
 }
 
-func FeatureSmoke(ctx featurekit.SmokeContext[Config]) featurekit.SmokeSpec {
-	return featurekit.SmokeSpec{
-		WantMetrics: []string{metricExampleValue(ctx.FeatureName) + " 1"},
-	}
-}
-
 func ResolveFeatureConfig(featureName string, config Config) (Config, string, bool, error) {
 	var fileConfig configFile
 	configFile, loaded, err := loadFeatureConfigFile(featureName, config.ConfigFile, &fileConfig)

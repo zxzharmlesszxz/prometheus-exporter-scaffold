@@ -84,7 +84,8 @@ The default managed set is intentionally conservative: CI files, ignore files,
 scaffold-owned adapter in `internal/exporter/exporter.go`. It also includes the
 stable feature contract, stable feature config contract, stable feature metrics
 contract, stable feature snapshot status contract, stable feature snapshotter
-contract, and shared feature test helpers under `internal/<feature-name>`.
+contract, stable feature smoke contract, and shared feature test helpers under
+`internal/<feature-name>`.
 Concrete exporters keep domain logic in adjacent feature-package files, so
 inspect those files separately instead of blindly syncing them:
 
@@ -97,6 +98,7 @@ make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/snaps
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_config_ext.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_metrics_ext.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_snapshotter_ext.go
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_smoke_ext.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/collector_snapshot_test.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/collector_refresh_test.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/collector_defaults_test.go
