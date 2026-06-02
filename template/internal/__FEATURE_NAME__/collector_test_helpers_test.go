@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/alecthomas/kingpin/v2"
+	"github.com/prometheus/client_golang/prometheus"
 	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/exportertest"
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/featurekit"
@@ -72,6 +73,18 @@ func hasString(values []string, want string) bool {
 		}
 	}
 	return false
+}
+
+func startTestCollector(t *testing.T, collector framework.StartableCollector) *prometheus.Registry {
+	t.Helper()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	collector.Start(ctx)
+
+	registry := prometheus.NewRegistry()
+	exportertest.Register(t, registry, collector)
+	return registry
 }
 
 func newTestCollector(featureName string, namespace string, snapshotter framework.Snapshotter[Snapshot], refreshInterval time.Duration) framework.StartableCollector {
