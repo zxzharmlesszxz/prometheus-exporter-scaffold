@@ -53,6 +53,7 @@ Default managed files:
   cmd/main.go
   internal/exporter/exporter.go
   internal/exporter/exporter_test.go
+  internal/__FEATURE_NAME__/feature.go
   internal/__FEATURE_NAME__/collector_test_helpers_test.go
   smoke/binary_test.go
 
@@ -76,10 +77,11 @@ Domain-specific metric constants, metrics, snapshots, snapshotters, and
 collector tests should live outside the adapter package, normally under
 internal/<feature-name>.
 The scaffold-owned feature lifecycle is split from domain behavior. The file
-internal/<feature-name>/collector_test_helpers_test.go should stay identical to
-the rendered scaffold; feature construction and collector construction belong to
-framework featurekit, while domain behavior belongs in feature config, metrics,
-snapshot, and lookup files.
+internal/<feature-name>/feature.go defines the stable feature contract, and
+internal/<feature-name>/collector_test_helpers_test.go defines shared feature
+test helpers. Both files should stay identical to the rendered scaffold; feature
+construction and collector construction belong to framework featurekit, while
+domain behavior belongs in feature config, metrics, snapshot, and lookup files.
 Inspect domain-specific skeleton files with concrete rendered paths such as
 --file internal/demo/feature_config.go or
 --file internal/domain/feature_metrics.go; these files are intentionally not
@@ -123,6 +125,7 @@ default_files=(
   "cmd/main.go"
   "internal/exporter/exporter.go"
   "internal/exporter/exporter_test.go"
+  "internal/__FEATURE_NAME__/feature.go"
   "internal/__FEATURE_NAME__/collector_test_helpers_test.go"
   "smoke/binary_test.go"
 )
