@@ -1,6 +1,7 @@
 package __FEATURE_NAME__
 
 import (
+	"log/slog"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -8,33 +9,57 @@ import (
 )
 
 type FeatureMetrics struct {
-	featureName      string
-	exampleValueDesc *prometheus.Desc
+	set FeatureMetricSet
 }
 
-func NewFeatureMetrics(ctx featurekit.SnapshotMetricsContext[Snapshot]) featurekit.SnapshotMetrics[Snapshot] {
-	return &FeatureMetrics{
-		featureName: ctx.FeatureName,
-		exampleValueDesc: prometheus.NewDesc(
-			metricExampleValue(ctx.FeatureName),
-			"Example "+ctx.FeatureName+" metric emitted by the generated exporter skeleton",
-			nil,
-			nil,
-		),
+type FeatureMetricSet interface {
+	Describe(chan<- *prometheus.Desc)
+	Collect(chan<- prometheus.Metric, Snapshot, time.Time)
+	LogSnapshotError(*slog.Logger, Snapshot)
+}
+
+type FeatureMetricSetFactory func(featurekit.SnapshotMetricsContext[Snapshot]) FeatureMetricSet
+
+type FeatureMetricsSpec struct {
+	factory FeatureMetricSetFactory
+}
+
+func NewFeatureMetricsSpec(factory FeatureMetricSetFactory) FeatureMetricsSpec {
+	return FeatureMetricsSpec{factory: factory}
+}
+
+func (s FeatureMetricsSpec) New(ctx featurekit.SnapshotMetricsContext[Snapshot]) featurekit.SnapshotMetrics[Snapshot] {
+	if s.factory == nil {
+		return nil
 	}
+	set := s.factory(ctx)
+	if set == nil {
+		return nil
+	}
+	return NewFeatureMetrics(set)
 }
 
-func (m *FeatureMetrics) Describe(ch chan<- *prometheus.Desc) {
-	ch <- m.exampleValueDesc
+func NewFeatureMetrics(set FeatureMetricSet) FeatureMetrics {
+	return FeatureMetrics{set: set}
 }
 
-func (m *FeatureMetrics) Collect(ch chan<- prometheus.Metric, snapshot Snapshot, _ time.Time) {
-	if !snapshot.Success {
+func (m FeatureMetrics) Describe(ch chan<- *prometheus.Desc) {
+	if m.set == nil {
 		return
 	}
-	ch <- prometheus.MustNewConstMetric(
-		m.exampleValueDesc,
-		prometheus.GaugeValue,
-		snapshot.Value,
-	)
+	m.set.Describe(ch)
+}
+
+func (m FeatureMetrics) Collect(ch chan<- prometheus.Metric, snapshot Snapshot, now time.Time) {
+	if m.set == nil {
+		return
+	}
+	m.set.Collect(ch, snapshot, now)
+}
+
+func (m FeatureMetrics) LogSnapshotError(logger *slog.Logger, snapshot Snapshot) {
+	if m.set == nil {
+		return
+	}
+	m.set.LogSnapshotError(logger, snapshot)
 }

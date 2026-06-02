@@ -2,7 +2,6 @@ package __FEATURE_NAME__
 
 import (
 	"context"
-	"log/slog"
 	"time"
 
 	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
@@ -20,11 +19,5 @@ func FeatureSnapshotStatus(snapshot Snapshot) framework.SnapshotStatus {
 	return framework.SnapshotStatus{
 		AttemptTime: snapshot.AttemptTime,
 		Success:     snapshot.Success,
-	}
-}
-
-func (m *FeatureMetrics) LogSnapshotError(logger *slog.Logger, snapshot Snapshot) {
-	if snapshot.Err != nil {
-		logger.Error(m.featureName+" data collection failed", "err", snapshot.Err)
 	}
 }

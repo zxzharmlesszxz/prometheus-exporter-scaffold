@@ -15,6 +15,9 @@
   standard forwarding methods such as flag, snapshotter, metrics, runtime
   config, and smoke registration. `feature_config.go` owns the stable config
   contract and wires feature-specific config hooks from `feature_config_ext.go`.
+  `feature_metrics.go` owns the stable metrics contract and wires feature-specific
+  metric descriptors, collection, and snapshot-error logging from
+  `feature_metrics_ext.go`.
   Feature-specific defaults and hook functions live in adjacent feature files
   and are wired through `NewFeatureSpec()`.
 - `smoke`

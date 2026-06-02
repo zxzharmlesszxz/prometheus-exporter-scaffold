@@ -32,7 +32,7 @@ func NewFeatureSpec() FeatureSpec {
 		),
 		snapshot:    NewFeatureSnapshotSpec(FeatureSnapshotStatus),
 		snapshotter: NewFeatureSnapshotterSpec(NewFeatureSnapshotter, NewDefaultSnapshotter()),
-		metrics:     NewFeatureMetricsSpec(NewFeatureMetrics),
+		metrics:     NewFeatureMetricsSpec(NewFeatureMetricSet),
 		smoke:       NewFeatureSmokeSpec(FeatureSmoke),
 	}
 }

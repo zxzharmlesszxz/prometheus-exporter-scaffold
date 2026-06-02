@@ -66,21 +66,6 @@ func (s FeatureSnapshotterSpec) DefaultSnapshotter() framework.Snapshotter[Snaps
 	return s.defaultSnapshotter
 }
 
-type FeatureMetricsSpec struct {
-	factory func(featurekit.SnapshotMetricsContext[Snapshot]) featurekit.SnapshotMetrics[Snapshot]
-}
-
-func NewFeatureMetricsSpec(factory func(featurekit.SnapshotMetricsContext[Snapshot]) featurekit.SnapshotMetrics[Snapshot]) FeatureMetricsSpec {
-	return FeatureMetricsSpec{factory: factory}
-}
-
-func (s FeatureMetricsSpec) New(ctx featurekit.SnapshotMetricsContext[Snapshot]) featurekit.SnapshotMetrics[Snapshot] {
-	if s.factory == nil {
-		return nil
-	}
-	return s.factory(ctx)
-}
-
 type FeatureSmokeSpec struct {
 	factory func(featurekit.SmokeContext[Config]) featurekit.SmokeSpec
 }
