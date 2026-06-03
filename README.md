@@ -58,8 +58,10 @@ package owns domain behavior.
 `framework.version` and `template/go.mod` track the
 `prometheus-exporter-framework` version used by newly generated exporters.
 
-When a new framework tag is published, the framework release workflow opens a
-pull request here to update the scaffold and verify a rendered exporter.
+When a new framework tag is published, the framework release workflow opens an
+issue here requesting a scaffold update. The scaffold repository then consumes
+the published framework tag through its own normal change flow and verifies a
+rendered exporter.
 
 This repository's own CI also renders a demo exporter and runs its Go-only
 checks, so scaffold pull requests validate the generated code path directly.
