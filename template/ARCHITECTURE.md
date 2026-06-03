@@ -10,12 +10,12 @@
   Thin adapter that asks the feature package for a contract-backed feature and
   delegates bootstrap metadata to the framework.
 - `internal/__FEATURE_NAME__`
-  Concrete feature package. `feature.go` owns the scaffold-compatible assembly
-  of framework `featurekit.SnapshotFeatureExtension`, while the stable feature
-  contract, config-file flag, runtime config, collector construction, metrics
-  wiring, snapshot status wiring, and smoke wiring live in framework
-  `featurekit`. Feature-specific defaults and hook functions live in adjacent
-  feature files: `feature_config_ext.go`, `feature_metrics_ext.go`,
+  Concrete feature package. `feature.go` owns the scaffold-compatible
+  `featurekit.FeatureContract` bridge supported by the current framework
+  release and wires config-file flags, runtime config, collector construction,
+  metrics, snapshot status, and smoke behavior through feature-specific hooks.
+  Feature-specific defaults and hook functions live in adjacent feature files:
+  `feature_config_ext.go`, `feature_metrics_ext.go`,
   `feature_snapshotter_ext.go`, and `feature_smoke_ext.go`.
 - `smoke`
   Binary smoke tests that build the real executable and verify CLI, HTTP, and metric behavior.
