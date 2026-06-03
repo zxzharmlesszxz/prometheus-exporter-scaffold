@@ -11,9 +11,11 @@
   delegates bootstrap metadata to the framework.
 - `internal/__FEATURE_NAME__`
   Concrete feature package. `feature.go` owns the scaffold-compatible
-  `featurekit.FeatureContract` bridge supported by the current framework
-  release and wires config-file flags, runtime config, collector construction,
-  metrics, snapshot status, and smoke behavior through feature-specific hooks.
+  `featurekit.SnapshotFeatureExtension` assembly and wires config-file flags,
+  runtime config, collector construction, metrics, snapshot status, and smoke
+  behavior through feature-specific hooks.
+  `feature_config_flags.go` owns the scaffold-managed wrapper that registers
+  feature config flag specs through framework `featurekit`.
   Feature-specific defaults and hook functions live in adjacent feature files:
   `feature_config_ext.go`, `feature_metrics_ext.go`,
   `feature_snapshotter_ext.go`, and `feature_smoke_ext.go`.
@@ -26,7 +28,7 @@
 2. `internal/exporter` creates the concrete feature through
    `internal/__FEATURE_NAME__.NewFeature(...)` and framework-injected feature
    metadata.
-3. Framework `featurekit.Feature` registers common flags such as `--__FEATURE_NAME__.refresh-interval` and `--__FEATURE_NAME__.config-file`, then delegates feature-specific behavior through the framework-owned feature contract.
+3. Framework `featurekit.Feature` registers common flags such as `--__FEATURE_NAME__.refresh-interval` and `--__FEATURE_NAME__.config-file`, then delegates feature-specific flag specs and behavior through the framework-owned feature contract.
 4. Framework `featurekit.Feature` builds a typed snapshotter and collector from the extension-backed spec, then registers and starts the collector.
 5. `framework.SnapshotCollector` refreshes data in a background worker every `--__FEATURE_NAME__.refresh-interval`; scrapes read the latest completed snapshot.
 6. The collector exports domain metrics and collection health metrics.

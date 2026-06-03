@@ -82,20 +82,24 @@ make drift-sync TARGET_DIR=../prometheus-demo-exporter
 The default managed set is intentionally conservative: CI files, ignore files,
 `cmd/main.go`, Dependabot config, `Makefile`, `Makefile.mk`, and the thin
 scaffold-owned adapter in `internal/exporter/exporter.go`. It also includes the
-thin feature assembly file and shared feature test helpers under
-`internal/<feature-name>`. The stable feature contract itself lives in
-framework `featurekit`.
+thin feature assembly file, config flag loader wrapper, and shared feature test
+helpers under `internal/<feature-name>`. The stable feature contract itself
+lives in framework `featurekit`.
 Concrete exporters keep domain logic in adjacent feature-package files, so
 inspect those files separately instead of blindly syncing them:
 
+`feature_config_flags.go` is scaffold-owned and delegates feature config flag
+registration to framework `featurekit`.
+
 `feature_config_ext.go` owns the feature-specific `Config`, defaults, flag
-registration, config validation, config-file merge behavior, and runtime config
-entries that are wired into the framework-owned feature contract.
+specs, config validation, config-file merge behavior, and runtime config entries
+that are wired into the framework-owned feature contract.
 
 ```bash
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=Makefile
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=Dockerfile
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/exporter/exporter.go
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_config_flags.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/metrics.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/snapshot_types.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_config_ext.go

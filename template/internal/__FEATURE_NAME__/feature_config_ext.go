@@ -3,7 +3,6 @@ package __FEATURE_NAME__
 import (
 	"time"
 
-	"github.com/alecthomas/kingpin/v2"
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/featurekit"
 )
 
@@ -15,6 +14,8 @@ const DefaultRefreshInterval = time.Minute
 
 type configFile struct{}
 
+var featureConfigFlagSpecs = []featurekit.FeatureConfigFlagSpec[Config]{}
+
 func NewDefaultConfig() Config {
 	return Config{}
 }
@@ -22,8 +23,6 @@ func NewDefaultConfig() Config {
 func FeatureConfigFile(config *Config) *string {
 	return &config.ConfigFile
 }
-
-func RegisterFeatureConfigFlags(*kingpin.Application, featurekit.FlagContext, *Config) {}
 
 func ValidateFeatureConfig(Config) error {
 	return nil
