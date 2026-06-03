@@ -4,28 +4,26 @@ import (
 	"context"
 	"time"
 
-	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/featurekit"
 )
 
+type SnapshotGathererConfig struct{}
+
 type SnapshotGatherer struct{}
 
-func NewDefaultSnapshotter() framework.Snapshotter[Snapshot] {
-	return SnapshotGatherer{}
+func DefaultSnapshotGathererConfig() SnapshotGathererConfig {
+	return SnapshotGathererConfig{}
 }
 
-func NewFeatureSnapshotter(ctx featurekit.CollectorContext[Config]) (framework.Snapshotter[Snapshot], error) {
+func NewSnapshotGathererConfig(ctx featurekit.CollectorContext[Config]) (SnapshotGathererConfig, error) {
 	if _, _, _, err := ResolveFeatureConfig(ctx.FeatureName, ctx.Config); err != nil {
-		return nil, err
+		return SnapshotGathererConfig{}, err
 	}
-	return NewDefaultSnapshotter(), nil
+	return DefaultSnapshotGathererConfig(), nil
 }
 
-func FeatureSnapshotStatus(snapshot Snapshot) framework.SnapshotStatus {
-	return framework.SnapshotStatus{
-		AttemptTime: snapshot.AttemptTime,
-		Success:     snapshot.Success,
-	}
+func NewSnapshotGatherer(_ SnapshotGathererConfig) SnapshotGatherer {
+	return SnapshotGatherer{}
 }
 
 func (SnapshotGatherer) Snapshot(_ context.Context, now time.Time) Snapshot {
