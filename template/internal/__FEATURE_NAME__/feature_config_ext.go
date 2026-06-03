@@ -21,6 +21,10 @@ func NewDefaultConfig() Config {
 
 func RegisterFeatureConfigFlags(*kingpin.Application, featurekit.FlagContext, *Config) {}
 
+func ValidateFeatureConfig(Config) error {
+	return nil
+}
+
 func FeatureRuntimeConfigEntries(featurekit.RuntimeConfigContext[Config], Config) []any {
 	return nil
 }

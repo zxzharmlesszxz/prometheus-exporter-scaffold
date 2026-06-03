@@ -89,6 +89,10 @@ contract, stable feature smoke contract, and shared feature test helpers under
 Concrete exporters keep domain logic in adjacent feature-package files, so
 inspect those files separately instead of blindly syncing them:
 
+`feature_config_ext.go` owns the feature-specific `Config`, defaults, flag
+registration, config validation, config-file merge behavior, and runtime config
+entries that are wired into the stable `feature_config.go` contract.
+
 ```bash
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=Makefile
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=Dockerfile

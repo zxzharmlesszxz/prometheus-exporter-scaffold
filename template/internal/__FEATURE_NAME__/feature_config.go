@@ -27,6 +27,7 @@ func NewFeatureSpec() FeatureSpec {
 		config: NewFeatureConfigSpec(
 			NewDefaultConfig(),
 			RegisterFeatureConfigFlags,
+			ValidateFeatureConfig,
 			ResolveFeatureConfig,
 			FeatureRuntimeConfigEntries,
 		),
@@ -37,11 +38,12 @@ func NewFeatureSpec() FeatureSpec {
 	}
 }
 
-func NewFeatureConfigSpec(defaultConfig Config, registerFlags func(*kingpin.Application, featurekit.FlagContext, *Config), resolveConfig func(string, Config) (Config, string, bool, error), runtimeConfig func(featurekit.RuntimeConfigContext[Config], Config) []any) FeatureConfigSpec {
+func NewFeatureConfigSpec(defaultConfig Config, registerFlags func(*kingpin.Application, featurekit.FlagContext, *Config), validateConfig func(Config) error, resolveConfig func(string, Config) (Config, string, bool, error), runtimeConfig func(featurekit.RuntimeConfigContext[Config], Config) []any) FeatureConfigSpec {
 	return FeatureConfigSpec{
 		enabled:           true,
 		defaultConfig:     defaultConfig,
 		registerFlagsFunc: registerFlags,
+		validateFunc:      validateConfig,
 		resolveFunc:       resolveConfig,
 		runtimeConfigFunc: runtimeConfig,
 	}

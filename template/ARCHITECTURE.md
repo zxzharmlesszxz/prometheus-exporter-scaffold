@@ -14,7 +14,8 @@
   `Feature` interface, `FeatureExtension`, `FeatureSpec`, constructors, and
   standard forwarding methods such as flag, snapshotter, metrics, runtime
   config, and smoke registration. `feature_config.go` owns the stable config
-  contract and wires feature-specific config hooks from `feature_config_ext.go`.
+  contract and wires feature-specific defaults, flags, validation, config
+  resolution, and runtime config hooks from `feature_config_ext.go`.
   `feature_metrics.go` owns the stable metrics contract and wires feature-specific
   metric descriptors, collection, and snapshot-error logging from
   `feature_metrics_ext.go`. `feature_snapshot.go` owns the stable snapshot

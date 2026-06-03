@@ -91,7 +91,8 @@ metrics, snapshot status, snapshotter, and smoke contracts, while
 internal/<feature-name>/collector_test_helpers_test.go defines shared feature
 test helpers. These files should stay identical to the rendered scaffold;
 feature construction and collector construction belong to framework featurekit,
-while domain behavior belongs in feature config extension, feature metrics
+while domain behavior belongs in feature config extension hooks for defaults,
+flags, validation, config resolution, and runtime config; feature metrics
 extension, feature snapshotter extension, feature smoke extension, and lookup
 files.
 Inspect domain-specific skeleton files with concrete rendered paths such as
