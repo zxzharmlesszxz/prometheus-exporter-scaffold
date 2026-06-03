@@ -18,7 +18,7 @@ func TestCollectorBackgroundRefreshUpdatesSnapshotOutsideScrape(t *testing.T) {
 	collector := newTestCollectorWithNow(testFeatureName, testMetricNamespace, slog.New(slog.NewTextHandler(io.Discard, nil)), snapshotter, 20*time.Millisecond, nil)
 
 	registry := startTestCollector(t, collector)
-	exportertest.WaitForMetricValue(t, registry, metricExampleValue(testFeatureName), nil, 1)
+	exportertest.WaitForMetricValue(t, registry, metricName(testFeatureName, "", metricExampleValue), nil, 1)
 
 	snapshotter.set(Snapshot{AttemptTime: start.Add(time.Minute), Success: false, Err: errors.New("refresh failed")})
 	exportertest.WaitForMetricValue(t, registry, testLastSuccess, nil, 0)

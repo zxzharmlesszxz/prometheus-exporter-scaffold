@@ -34,10 +34,10 @@ func TestCollectorExportsSnapshot(t *testing.T) {
 # HELP %[4]s Unix timestamp of the last successful %[5]s data collection
 # TYPE %[4]s gauge
 %[4]s 1.7e+09
-`, metricExampleValue(testFeatureName), testLastSuccess, testLastTimestamp, testLastSuccessfulTS, testFeatureName)
+`, metricName(testFeatureName, "", metricExampleValue), testLastSuccess, testLastTimestamp, testLastSuccessfulTS, testFeatureName)
 
 	if err := testutil.CollectAndCompare(collector, strings.NewReader(expected),
-		metricExampleValue(testFeatureName),
+		metricName(testFeatureName, "", metricExampleValue),
 		testLastSuccess,
 		testLastTimestamp,
 		testLastSuccessfulTS,

@@ -34,7 +34,7 @@ func TestCollectorDefaultsAndFailureMetrics(t *testing.T) {
 `, "exporter_last_collection_success", "exporter_last_collection_timestamp_seconds", "exporter_last_successful_collection_timestamp_seconds", "exporter")
 
 	if err := testutil.CollectAndCompare(collector, strings.NewReader(expected),
-		metricExampleValue("exporter"),
+		metricName("exporter", "", metricExampleValue),
 		"exporter_last_collection_success",
 		"exporter_last_collection_timestamp_seconds",
 		"exporter_last_successful_collection_timestamp_seconds",
@@ -52,7 +52,7 @@ func TestCollectorUsesDefaultSnapshotter(t *testing.T) {
 	})
 
 	families := exportertest.RegisterAndGather(t, collector)
-	exportertest.AssertMetricValue(t, families, metricExampleValue(testFeatureName), nil, 1)
+	exportertest.AssertMetricValue(t, families, metricName(testFeatureName, "", metricExampleValue), nil, 1)
 	exportertest.AssertMetricValue(t, families, testLastSuccess, nil, 1)
 	exportertest.AssertMetricValue(t, families, testLastTimestamp, nil, float64(now.Unix()))
 	exportertest.AssertMetricValue(t, families, testLastSuccessfulTS, nil, float64(now.Unix()))

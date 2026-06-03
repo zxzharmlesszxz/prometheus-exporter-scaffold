@@ -125,9 +125,79 @@ func TestExporterSmokeSpecIncludesSkeletonMetric(t *testing.T) {
 	t.Parallel()
 
 	spec := newTestExporter().SmokeSpec()
-	want := metricExampleValue(testFeatureName) + " 1"
+	want := metricName(testFeatureName, "", metricExampleValue) + " 1"
 	if !hasString(spec.WantMetrics, want) {
 		t.Fatalf("SmokeSpec().WantMetrics = %v, want %q", spec.WantMetrics, want)
+	}
+}
+
+func TestMetricNameContract(t *testing.T) {
+	t.Parallel()
+
+	if got := metricName("feature", "namespace", featureMetricSpecs[0].ID); got != featureMetricSpecs[0].metricName("feature", "namespace") {
+		t.Fatalf("metricName(known) = %q, want descriptor spec name", got)
+	}
+	if got := metricName("feature", "namespace", "missing_metric"); got != "missing_metric" {
+		t.Fatalf("metricName(missing) = %q, want missing_metric", got)
+	}
+
+	tests := []struct {
+		name string
+		spec metricSpec
+		want string
+	}{
+		{
+			name: "feature scope",
+			spec: metricSpec{Scope: metricScopeFeature, Name: "_value"},
+			want: "feature_value",
+		},
+		{
+			name: "namespace scope",
+			spec: metricSpec{Scope: metricScopeNamespace, Name: "_value"},
+			want: "namespace_value",
+		},
+		{
+			name: "absolute scope",
+			spec: metricSpec{Scope: metricScopeAbsolute, Name: "absolute_value"},
+			want: "absolute_value",
+		},
+		{
+			name: "unknown scope fallback",
+			spec: metricSpec{Scope: metricScope(99), Name: "fallback_value"},
+			want: "fallback_value",
+		},
+	}
+	for _, tt := range tests {
+		if got := tt.spec.metricName("feature", "namespace"); got != tt.want {
+			t.Fatalf("%s: metricName() = %q, want %q", tt.name, got, tt.want)
+		}
+	}
+}
+
+func TestMetricDescriptorsPreserveSpecOrder(t *testing.T) {
+	t.Parallel()
+
+	specs := []metricSpec{
+		{ID: "first", Scope: metricScopeFeature, Name: "_first", Help: "First metric"},
+		{ID: "second", Scope: metricScopeNamespace, Name: "_second", Help: "Second metric"},
+	}
+	descriptors := loadMetricDescriptors("feature", "namespace", specs)
+	ch := make(chan *prometheus.Desc, len(specs))
+	descriptors.Describe(ch)
+	close(ch)
+
+	got := make([]*prometheus.Desc, 0, len(specs))
+	for desc := range ch {
+		got = append(got, desc)
+	}
+	want := []*prometheus.Desc{descriptors.Get("first"), descriptors.Get("second")}
+	if len(got) != len(want) {
+		t.Fatalf("Describe() emitted %d descriptors, want %d", len(got), len(want))
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("Describe()[%d] = %v, want %v", i, got[i], want[i])
+		}
 	}
 }
 

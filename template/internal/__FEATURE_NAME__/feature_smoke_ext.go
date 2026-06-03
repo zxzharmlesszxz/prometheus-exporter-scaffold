@@ -4,6 +4,6 @@ import "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/feature
 
 func FeatureSmoke(ctx featurekit.SmokeContext[Config]) featurekit.SmokeSpec {
 	return featurekit.SmokeSpec{
-		WantMetrics: []string{metricExampleValue(ctx.FeatureName) + " 1"},
+		WantMetrics: []string{metricName(ctx.FeatureName, "", metricExampleValue) + " 1"},
 	}
 }

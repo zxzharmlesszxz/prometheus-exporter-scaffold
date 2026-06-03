@@ -9,24 +9,19 @@ import (
 )
 
 type ExampleMetrics struct {
-	featureName      string
-	exampleValueDesc *prometheus.Desc
+	featureName string
+	metrics     metricDescriptors
 }
 
 func NewFeatureMetricSet(ctx featurekit.SnapshotMetricsContext[Snapshot]) featurekit.SnapshotMetrics[Snapshot] {
 	return &ExampleMetrics{
 		featureName: ctx.FeatureName,
-		exampleValueDesc: prometheus.NewDesc(
-			metricExampleValue(ctx.FeatureName),
-			"Example "+ctx.FeatureName+" metric emitted by the generated exporter skeleton",
-			nil,
-			nil,
-		),
+		metrics:     loadMetricDescriptors(ctx.FeatureName, ctx.Namespace, featureMetricSpecs),
 	}
 }
 
 func (m *ExampleMetrics) Describe(ch chan<- *prometheus.Desc) {
-	ch <- m.exampleValueDesc
+	m.metrics.Describe(ch)
 }
 
 func (m *ExampleMetrics) Collect(ch chan<- prometheus.Metric, snapshot Snapshot, _ time.Time) {
@@ -34,7 +29,7 @@ func (m *ExampleMetrics) Collect(ch chan<- prometheus.Metric, snapshot Snapshot,
 		return
 	}
 	ch <- prometheus.MustNewConstMetric(
-		m.exampleValueDesc,
+		m.metrics.Get(metricExampleValue),
 		prometheus.GaugeValue,
 		snapshot.Value,
 	)
