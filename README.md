@@ -55,7 +55,7 @@ package owns domain behavior.
 
 ## Framework Version
 
-`framework.version` and `template/go.mod` track the
+`template/go.mod` track the
 `prometheus-exporter-framework` version used by newly generated exporters.
 
 When a new framework tag is published, the framework release workflow opens an

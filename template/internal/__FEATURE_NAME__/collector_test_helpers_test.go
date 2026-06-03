@@ -108,7 +108,7 @@ func newTestCollectorWithNow(featureName string, namespace string, logger *slog.
 			Namespace:              namespace,
 			Logger:                 logger,
 			Snapshotter:            snapshotter,
-			DefaultSnapshotter:     NewDefaultSnapshotter(),
+			DefaultSnapshotter:     NewDefaultSnapshotEngine(),
 			RefreshInterval:        refreshInterval,
 			DefaultRefreshInterval: DefaultRefreshInterval,
 			StatusFunc:             FeatureSnapshotStatus,

@@ -4,18 +4,26 @@ import (
 	"context"
 	"time"
 
+	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/featurekit"
 )
 
-func NewDefaultSnapshotEngine() SnapshotEngine {
+func NewDefaultSnapshotEngine() featurekit.SnapshotEngine[Snapshot] {
 	return defaultSnapshotEngine{}
 }
 
-func NewSnapshotEngine(ctx featurekit.CollectorContext[Config]) (SnapshotEngine, error) {
+func NewSnapshotEngine(ctx featurekit.CollectorContext[Config]) (featurekit.SnapshotEngine[Snapshot], error) {
 	if _, _, _, err := ResolveFeatureConfig(ctx.FeatureName, ctx.Config); err != nil {
 		return nil, err
 	}
 	return NewDefaultSnapshotEngine(), nil
+}
+
+func FeatureSnapshotStatus(snapshot Snapshot) framework.SnapshotStatus {
+	return framework.SnapshotStatus{
+		AttemptTime: snapshot.AttemptTime,
+		Success:     snapshot.Success,
+	}
 }
 
 type defaultSnapshotEngine struct{}

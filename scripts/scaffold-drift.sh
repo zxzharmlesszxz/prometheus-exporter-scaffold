@@ -80,7 +80,6 @@ internal/<feature-name>.
 The scaffold-owned feature lifecycle is split from domain behavior. The files
 internal/<feature-name>/feature.go,
 internal/<feature-name>/feature_config_flags.go, and
-internal/<feature-name>/feature_snapshotter.go, and
 internal/<feature-name>/collector_test_helpers_test.go define the stable
 feature assembly and shared feature test helpers. These files should stay
 identical to the rendered scaffold; feature construction, config-file flag
@@ -88,7 +87,7 @@ registration, feature config flag spec loading, runtime config, collector
 construction, metrics wiring, snapshot status wiring, and smoke wiring belong
 to framework featurekit, while domain behavior belongs in feature config
 extension hooks for defaults, flags, validation, config resolution, and runtime
-config; feature metrics extension, feature snapshotter extension, feature smoke
+config; feature metrics extension, feature snapshot engine extension, feature smoke
 extension, and lookup files.
 Inspect domain-specific skeleton files with concrete rendered paths such as
 --file internal/demo/feature_config_ext.go or
@@ -135,7 +134,6 @@ default_files=(
   "internal/exporter/exporter_test.go"
   "internal/__FEATURE_NAME__/feature.go"
   "internal/__FEATURE_NAME__/feature_config_flags.go"
-  "internal/__FEATURE_NAME__/feature_snapshotter.go"
   "internal/__FEATURE_NAME__/collector_test_helpers_test.go"
   "smoke/binary_test.go"
 )
@@ -145,6 +143,7 @@ obsolete_files=(
   "internal/__FEATURE_NAME__/feature_config.go"
   "internal/__FEATURE_NAME__/feature_metrics.go"
   "internal/__FEATURE_NAME__/feature_snapshot.go"
+  "internal/__FEATURE_NAME__/feature_snapshotter.go"
   "internal/__FEATURE_NAME__/feature_smoke.go"
   "internal/exporter/defaults.go"
   "internal/exporter/feature.go"
