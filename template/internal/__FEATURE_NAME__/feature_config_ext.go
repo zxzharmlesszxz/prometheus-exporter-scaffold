@@ -28,7 +28,7 @@ func ValidateFeatureConfig(Config) error {
 	return nil
 }
 
-func FeatureRuntimeConfigEntries(featurekit.RuntimeConfigContext[Config], Config) []any {
+func FeatureRuntimeConfigEntries(_ featurekit.RuntimeConfigContext[Config], _ Config) []any {
 	return nil
 }
 

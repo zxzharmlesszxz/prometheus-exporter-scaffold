@@ -54,6 +54,7 @@ Default managed files:
   internal/exporter/exporter.go
   internal/exporter/exporter_test.go
   internal/__FEATURE_NAME__/feature.go
+  internal/__FEATURE_NAME__/feature_config_flags.go
   internal/__FEATURE_NAME__/collector_test_helpers_test.go
   smoke/binary_test.go
 

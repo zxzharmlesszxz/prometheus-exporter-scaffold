@@ -7,26 +7,20 @@ import (
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/featurekit"
 )
 
-type SnapshotGathererConfig struct{}
-
-type SnapshotGatherer struct{}
-
-func DefaultSnapshotGathererConfig() SnapshotGathererConfig {
-	return SnapshotGathererConfig{}
+func NewDefaultSnapshotEngine() SnapshotEngine {
+	return defaultSnapshotEngine{}
 }
 
-func NewSnapshotGathererConfig(ctx featurekit.CollectorContext[Config]) (SnapshotGathererConfig, error) {
+func NewSnapshotEngine(ctx featurekit.CollectorContext[Config]) (SnapshotEngine, error) {
 	if _, _, _, err := ResolveFeatureConfig(ctx.FeatureName, ctx.Config); err != nil {
-		return SnapshotGathererConfig{}, err
+		return nil, err
 	}
-	return DefaultSnapshotGathererConfig(), nil
+	return NewDefaultSnapshotEngine(), nil
 }
 
-func NewSnapshotGatherer(_ SnapshotGathererConfig) SnapshotGatherer {
-	return SnapshotGatherer{}
-}
+type defaultSnapshotEngine struct{}
 
-func (SnapshotGatherer) Snapshot(_ context.Context, now time.Time) Snapshot {
+func (e defaultSnapshotEngine) Snapshot(_ context.Context, now time.Time) Snapshot {
 	return Snapshot{
 		AttemptTime: now,
 		Success:     true,

@@ -76,7 +76,6 @@ func TestFeatureConfigFileHook(t *testing.T) {
 	if got := exportertest.RuntimeConfigValue(t, exporter.RuntimeConfig(), "config_file_loaded"); got != true {
 		t.Fatalf("config_file_loaded = %v, want true", got)
 	}
-
 	missingExporter := newTestExporter()
 	parseExporterFlags(t, missingExporter, []string{"--" + testFeatureName + ".config-file=" + filepath.Join(t.TempDir(), "missing.yml")})
 	if err := missingExporter.RegisterCollectors(testFeatureContext(), prometheus.NewRegistry()); err == nil {
