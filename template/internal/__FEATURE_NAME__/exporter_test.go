@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/alecthomas/kingpin/v2"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/exportertest"
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/featurekit"
 )
@@ -25,7 +25,7 @@ func TestExporterContract(t *testing.T) {
 		},
 		WantRuntimeConfig: map[string]any{
 			"refresh_interval":   30 * time.Second,
-			"config_file":        defaultFeatureConfigFile(testFeatureName),
+			"config_file":        featurekit.DefaultFeatureConfigFile(testFeatureName),
 			"config_file_loaded": false,
 		},
 		DuplicateRegistration:       true,
@@ -49,7 +49,7 @@ func TestContractFeatureDefaults(t *testing.T) {
 	if got := exportertest.RuntimeConfigValue(t, config, "refresh_interval"); got != DefaultRefreshInterval {
 		t.Fatalf("refresh_interval = %v, want %v", got, DefaultRefreshInterval)
 	}
-	wantConfigFile := defaultFeatureConfigFile("")
+	wantConfigFile := featurekit.DefaultFeatureConfigFile("")
 	if got := exportertest.RuntimeConfigValue(t, config, "config_file"); got != wantConfigFile {
 		t.Fatalf("config_file = %q, want %q", got, wantConfigFile)
 	}
@@ -58,70 +58,66 @@ func TestContractFeatureDefaults(t *testing.T) {
 	}
 }
 
-func TestFeatureExtensionConfigFileHooks(t *testing.T) {
+func TestFeatureConfigFileHook(t *testing.T) {
 	t.Parallel()
 
 	config := NewDefaultConfig()
 	configFile := writeFeatureConfig(t, "{}\n")
-	extension := FeatureExtension{}
-	app := kingpin.New("test", "")
-	extension.RegisterFlags(app, featurekit.FlagContext{FeatureName: testFeatureName}, &config)
-	if _, err := app.Parse([]string{"--" + testFeatureName + ".config-file=" + configFile}); err != nil {
-		t.Fatalf("Parse() error = %v, want nil", err)
-	}
+	*FeatureConfigFile(&config) = configFile
 	if got := config.ConfigFile; got != configFile {
 		t.Fatalf("ConfigFile = %q, want %q", got, configFile)
 	}
-	if got := *FeatureConfigFile(&config); got != configFile {
-		t.Fatalf("FeatureConfigFile() = %q, want %q", got, configFile)
+
+	exporter := newTestExporter()
+	parseExporterFlags(t, exporter, []string{"--" + testFeatureName + ".config-file=" + configFile})
+	if got := exportertest.RuntimeConfigValue(t, exporter.RuntimeConfig(), "config_file"); got != configFile {
+		t.Fatalf("config_file = %q, want %q", got, configFile)
 	}
-	if err := extension.ValidateConfig(config); err != nil {
-		t.Fatalf("ValidateConfig() error = %v, want nil", err)
+	if got := exportertest.RuntimeConfigValue(t, exporter.RuntimeConfig(), "config_file_loaded"); got != true {
+		t.Fatalf("config_file_loaded = %v, want true", got)
 	}
-	if _, err := extension.NewSnapshotter(featurekit.CollectorContext[Config]{
-		FeatureName:     testFeatureName,
-		Framework:       testFeatureContext(),
-		Config:          Config{ConfigFile: filepath.Join(t.TempDir(), "missing.yml")},
-		RefreshInterval: testRefreshInterval,
-	}); err == nil {
-		t.Fatal("NewSnapshotter() error = nil, want missing explicit config file error")
+
+	missingExporter := newTestExporter()
+	parseExporterFlags(t, missingExporter, []string{"--" + testFeatureName + ".config-file=" + filepath.Join(t.TempDir(), "missing.yml")})
+	if err := missingExporter.RegisterCollectors(testFeatureContext(), prometheus.NewRegistry()); err == nil {
+		t.Fatal("RegisterCollectors() error = nil, want missing explicit config file error")
 	}
 }
 
 func TestFeatureConfigFileLoader(t *testing.T) {
 	t.Parallel()
 
-	if got := defaultFeatureConfigFile(" custom "); got != filepath.Join("/etc/prometheus", "prometheus-custom-exporter.yml") {
-		t.Fatalf("defaultFeatureConfigFile(custom) = %q", got)
+	if got := featurekit.DefaultFeatureConfigFile(" custom "); got != filepath.Join("/etc/prometheus", "prometheus-custom-exporter.yml") {
+		t.Fatalf("DefaultFeatureConfigFile(custom) = %q", got)
 	}
-	if got := defaultFeatureConfigFile(" "); got != filepath.Join("/etc/prometheus", "prometheus-exporter-exporter.yml") {
-		t.Fatalf("defaultFeatureConfigFile(empty) = %q", got)
+	if got := featurekit.DefaultFeatureConfigFile(" "); got != filepath.Join("/etc/prometheus", "prometheus-exporter-exporter.yml") {
+		t.Fatalf("DefaultFeatureConfigFile(empty) = %q", got)
 	}
 
 	missingPath := filepath.Join(t.TempDir(), "missing.yml")
-	path, loaded, err := loadFeatureConfigFile(testFeatureName, missingPath, &configFile{})
+	path, loaded, err := featurekit.LoadFeatureConfigFile(testFeatureName, missingPath, &configFile{})
 	if err == nil {
-		t.Fatal("loadFeatureConfigFile() error = nil, want missing explicit file error")
+		t.Fatal("LoadFeatureConfigFile() error = nil, want missing explicit file error")
 	}
 	if !errors.Is(err, os.ErrNotExist) {
-		t.Fatalf("loadFeatureConfigFile() error = %v, want os.ErrNotExist", err)
+		t.Fatalf("LoadFeatureConfigFile() error = %v, want os.ErrNotExist", err)
 	}
 	if path != missingPath || loaded {
-		t.Fatalf("loadFeatureConfigFile() path/loaded = %q/%v, want %q/false", path, loaded, missingPath)
+		t.Fatalf("LoadFeatureConfigFile() path/loaded = %q/%v, want %q/false", path, loaded, missingPath)
 	}
 
 	badPath := writeFeatureConfig(t, "unknown: true\n")
-	if _, loaded, err := loadFeatureConfigFile(testFeatureName, badPath, &configFile{}); err == nil || loaded {
-		t.Fatalf("loadFeatureConfigFile(strict) loaded/error = %v/%v, want false/error", loaded, err)
+	if _, loaded, err := featurekit.LoadFeatureConfigFile(testFeatureName, badPath, &configFile{}); err == nil || loaded {
+		t.Fatalf("LoadFeatureConfigFile(strict) loaded/error = %v/%v, want false/error", loaded, err)
 	}
 
 	configPath := writeFeatureConfig(t, "{}\n")
-	path, loaded, err = loadFeatureConfigFile(testFeatureName, " "+configPath+" ", &configFile{})
+	path, loaded, err = featurekit.LoadFeatureConfigFile(testFeatureName, " "+configPath+" ", &configFile{})
 	if err != nil {
-		t.Fatalf("loadFeatureConfigFile(valid) error = %v, want nil", err)
+		t.Fatalf("LoadFeatureConfigFile(valid) error = %v, want nil", err)
 	}
 	if path != configPath || !loaded {
-		t.Fatalf("loadFeatureConfigFile(valid) path/loaded = %q/%v, want %q/true", path, loaded, configPath)
+		t.Fatalf("LoadFeatureConfigFile(valid) path/loaded = %q/%v, want %q/true", path, loaded, configPath)
 	}
 }
 
