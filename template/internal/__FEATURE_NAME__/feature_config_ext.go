@@ -19,6 +19,10 @@ func NewDefaultConfig() Config {
 	return Config{}
 }
 
+func FeatureConfigFile(config *Config) *string {
+	return &config.ConfigFile
+}
+
 func RegisterFeatureConfigFlags(*kingpin.Application, featurekit.FlagContext, *Config) {}
 
 func ValidateFeatureConfig(Config) error {
@@ -31,6 +35,6 @@ func FeatureRuntimeConfigEntries(featurekit.RuntimeConfigContext[Config], Config
 
 func ResolveFeatureConfig(featureName string, config Config) (Config, string, bool, error) {
 	var fileConfig configFile
-	configFile, loaded, err := loadFeatureConfigFile(featureName, config.ConfigFile, &fileConfig)
+	configFile, loaded, err := featurekit.LoadFeatureConfigFile(featureName, config.ConfigFile, &fileConfig)
 	return config, configFile, loaded, err
 }

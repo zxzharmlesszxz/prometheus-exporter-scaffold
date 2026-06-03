@@ -54,12 +54,6 @@ Default managed files:
   internal/exporter/exporter.go
   internal/exporter/exporter_test.go
   internal/__FEATURE_NAME__/feature.go
-  internal/__FEATURE_NAME__/feature_spec.go
-  internal/__FEATURE_NAME__/feature_config.go
-  internal/__FEATURE_NAME__/feature_metrics.go
-  internal/__FEATURE_NAME__/feature_snapshot.go
-  internal/__FEATURE_NAME__/feature_snapshotter.go
-  internal/__FEATURE_NAME__/feature_smoke.go
   internal/__FEATURE_NAME__/collector_test_helpers_test.go
   smoke/binary_test.go
 
@@ -83,21 +77,15 @@ Domain-specific metric constants, metric implementations, snapshots, snapshotter
 collector tests should live outside the adapter package, normally under
 internal/<feature-name>.
 The scaffold-owned feature lifecycle is split from domain behavior. The files
-internal/<feature-name>/feature.go, internal/<feature-name>/feature_spec.go,
-internal/<feature-name>/feature_config.go,
-internal/<feature-name>/feature_metrics.go, and
-internal/<feature-name>/feature_snapshot.go, and
-internal/<feature-name>/feature_snapshotter.go, and
-internal/<feature-name>/feature_smoke.go define the stable feature, feature
-spec wiring, config, metrics, snapshot status, snapshotter, and smoke
-contracts, while
-internal/<feature-name>/collector_test_helpers_test.go defines shared feature
-test helpers. These files should stay identical to the rendered scaffold;
-feature construction and collector construction belong to framework featurekit,
-while domain behavior belongs in feature config extension hooks for defaults,
-flags, validation, config resolution, and runtime config; feature metrics
-extension, feature snapshotter extension, feature smoke extension, and lookup
-files.
+internal/<feature-name>/feature.go and
+internal/<feature-name>/collector_test_helpers_test.go define the stable
+feature assembly and shared feature test helpers. These files should stay
+identical to the rendered scaffold; feature construction, config-file flag
+registration, runtime config, collector construction, metrics wiring, snapshot
+status wiring, and smoke wiring belong to framework featurekit, while domain
+behavior belongs in feature config extension hooks for defaults, flags,
+validation, config resolution, and runtime config; feature metrics extension,
+feature snapshotter extension, feature smoke extension, and lookup files.
 Inspect domain-specific skeleton files with concrete rendered paths such as
 --file internal/demo/feature_config_ext.go or
 --file internal/domain/feature_metrics_ext.go; these files are intentionally not
@@ -142,17 +130,17 @@ default_files=(
   "internal/exporter/exporter.go"
   "internal/exporter/exporter_test.go"
   "internal/__FEATURE_NAME__/feature.go"
+  "internal/__FEATURE_NAME__/collector_test_helpers_test.go"
+  "smoke/binary_test.go"
+)
+
+obsolete_files=(
   "internal/__FEATURE_NAME__/feature_spec.go"
   "internal/__FEATURE_NAME__/feature_config.go"
   "internal/__FEATURE_NAME__/feature_metrics.go"
   "internal/__FEATURE_NAME__/feature_snapshot.go"
   "internal/__FEATURE_NAME__/feature_snapshotter.go"
   "internal/__FEATURE_NAME__/feature_smoke.go"
-  "internal/__FEATURE_NAME__/collector_test_helpers_test.go"
-  "smoke/binary_test.go"
-)
-
-obsolete_files=(
   "internal/exporter/defaults.go"
   "internal/exporter/feature.go"
   "internal/exporter/feature_collectors.go"

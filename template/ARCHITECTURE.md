@@ -10,24 +10,13 @@
   Thin adapter that asks the feature package for a contract-backed feature and
   delegates bootstrap metadata to the framework.
 - `internal/__FEATURE_NAME__`
-  Concrete feature package. `feature.go` owns the stable scaffold-compatible
-  `Feature` interface, `FeatureExtension`, `FeatureSpec`, constructors, and
-  standard forwarding methods such as flag, snapshotter, metrics, runtime
-  config, and smoke registration. `feature_spec.go` owns the stable
-  `NewFeatureSpec()` wiring across config, snapshot status, snapshotter,
-  metrics, and smoke sub-contracts. `feature_config.go` owns the stable config
-  contract and wires feature-specific defaults, flags, validation, config
-  resolution, and runtime config hooks from `feature_config_ext.go`.
-  `feature_metrics.go` owns the stable metrics contract and wires feature-specific
-  metric descriptors, collection, and snapshot-error logging from
-  `feature_metrics_ext.go`. `feature_snapshot.go` owns the stable snapshot
-  status contract. `feature_snapshotter.go` owns the stable snapshotter factory
-  contract, while feature-specific snapshot gathering lives in
-  `feature_snapshotter_ext.go`. `feature_smoke.go` owns the stable smoke spec
-  contract, while feature-specific smoke args and metric expectations live in
-  `feature_smoke_ext.go`.
-  Feature-specific defaults and hook functions live in adjacent feature files
-  and are wired through `NewFeatureSpec()`.
+  Concrete feature package. `feature.go` owns the scaffold-compatible assembly
+  of framework `featurekit.SnapshotFeatureExtension`, while the stable feature
+  contract, config-file flag, runtime config, collector construction, metrics
+  wiring, snapshot status wiring, and smoke wiring live in framework
+  `featurekit`. Feature-specific defaults and hook functions live in adjacent
+  feature files: `feature_config_ext.go`, `feature_metrics_ext.go`,
+  `feature_snapshotter_ext.go`, and `feature_smoke_ext.go`.
 - `smoke`
   Binary smoke tests that build the real executable and verify CLI, HTTP, and metric behavior.
 
@@ -37,8 +26,8 @@
 2. `internal/exporter` creates the concrete feature through
    `internal/__FEATURE_NAME__.NewFeature(...)` and framework-injected feature
    metadata.
-3. Framework `featurekit.Feature` registers common flags such as `--__FEATURE_NAME__.refresh-interval` and delegates feature-specific behavior through the framework-owned feature contract.
-4. Framework `featurekit.Feature` builds a typed snapshotter and collector from the contract-backed spec, then registers and starts the collector.
+3. Framework `featurekit.Feature` registers common flags such as `--__FEATURE_NAME__.refresh-interval` and `--__FEATURE_NAME__.config-file`, then delegates feature-specific behavior through the framework-owned feature contract.
+4. Framework `featurekit.Feature` builds a typed snapshotter and collector from the extension-backed spec, then registers and starts the collector.
 5. `framework.SnapshotCollector` refreshes data in a background worker every `--__FEATURE_NAME__.refresh-interval`; scrapes read the latest completed snapshot.
 6. The collector exports domain metrics and collection health metrics.
 

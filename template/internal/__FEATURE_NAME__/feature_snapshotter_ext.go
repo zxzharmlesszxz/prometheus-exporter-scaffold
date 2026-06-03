@@ -21,6 +21,13 @@ func NewFeatureSnapshotter(ctx featurekit.CollectorContext[Config]) (framework.S
 	return FeatureSnapshotGatherer{}, nil
 }
 
+func FeatureSnapshotStatus(snapshot Snapshot) framework.SnapshotStatus {
+	return framework.SnapshotStatus{
+		AttemptTime: snapshot.AttemptTime,
+		Success:     snapshot.Success,
+	}
+}
+
 func (FeatureSnapshotGatherer) Snapshot(_ context.Context, now time.Time) Snapshot {
 	return Snapshot{
 		AttemptTime: now,

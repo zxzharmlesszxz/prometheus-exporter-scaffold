@@ -13,7 +13,7 @@ type ExampleMetrics struct {
 	exampleValueDesc *prometheus.Desc
 }
 
-func NewFeatureMetricSet(ctx featurekit.SnapshotMetricsContext[Snapshot]) FeatureMetricSet {
+func NewFeatureMetricSet(ctx featurekit.SnapshotMetricsContext[Snapshot]) featurekit.SnapshotMetrics[Snapshot] {
 	return &ExampleMetrics{
 		featureName: ctx.FeatureName,
 		exampleValueDesc: prometheus.NewDesc(
