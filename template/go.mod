@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/prometheus/client_golang v1.23.2
-	github.com/zxzharmlesszxz/prometheus-exporter-framework v0.2.3
+	github.com/zxzharmlesszxz/prometheus-exporter-framework v0.2.4
 	go.yaml.in/yaml/v2 v2.4.4
 )
 
@@ -23,7 +23,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.67.5 // indirect
+	github.com/prometheus/common v0.68.0 // indirect
 	github.com/prometheus/exporter-toolkit v0.16.0 // indirect
 	github.com/prometheus/procfs v0.20.1 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
