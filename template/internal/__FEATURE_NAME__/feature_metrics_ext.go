@@ -10,13 +10,13 @@ import (
 
 type ExampleMetrics struct {
 	featureName string
-	metrics     metricDescriptors
+	metrics     featurekit.FeatureMetricDescriptors
 }
 
 func NewFeatureMetricSet(ctx featurekit.SnapshotMetricsContext[Snapshot]) featurekit.SnapshotMetrics[Snapshot] {
 	return &ExampleMetrics{
 		featureName: ctx.FeatureName,
-		metrics:     loadMetricDescriptors(ctx.FeatureName, ctx.Namespace, featureMetricSpecs),
+		metrics:     featurekit.LoadFeatureMetricDescriptors(ctx.FeatureName, ctx.Namespace, featureMetricSpecs),
 	}
 }
 
