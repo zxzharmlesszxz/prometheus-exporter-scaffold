@@ -21,23 +21,6 @@ type FeatureConfigSpec struct {
 	runtimeConfigFunc func(featurekit.RuntimeConfigContext[Config], Config) []any
 }
 
-func NewFeatureSpec() FeatureSpec {
-	return FeatureSpec{
-		refreshInterval: DefaultRefreshInterval,
-		config: NewFeatureConfigSpec(
-			NewDefaultConfig(),
-			RegisterFeatureConfigFlags,
-			ValidateFeatureConfig,
-			ResolveFeatureConfig,
-			FeatureRuntimeConfigEntries,
-		),
-		snapshot:    NewFeatureSnapshotSpec(FeatureSnapshotStatus),
-		snapshotter: NewFeatureSnapshotterSpec(NewFeatureSnapshotter, NewDefaultSnapshotter()),
-		metrics:     NewFeatureMetricsSpec(NewFeatureMetricSet),
-		smoke:       NewFeatureSmokeSpec(FeatureSmoke),
-	}
-}
-
 func NewFeatureConfigSpec(defaultConfig Config, registerFlags func(*kingpin.Application, featurekit.FlagContext, *Config), validateConfig func(Config) error, resolveConfig func(string, Config) (Config, string, bool, error), runtimeConfig func(featurekit.RuntimeConfigContext[Config], Config) []any) FeatureConfigSpec {
 	return FeatureConfigSpec{
 		enabled:           true,

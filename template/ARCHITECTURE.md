@@ -13,7 +13,9 @@
   Concrete feature package. `feature.go` owns the stable scaffold-compatible
   `Feature` interface, `FeatureExtension`, `FeatureSpec`, constructors, and
   standard forwarding methods such as flag, snapshotter, metrics, runtime
-  config, and smoke registration. `feature_config.go` owns the stable config
+  config, and smoke registration. `feature_spec.go` owns the stable
+  `NewFeatureSpec()` wiring across config, snapshot status, snapshotter,
+  metrics, and smoke sub-contracts. `feature_config.go` owns the stable config
   contract and wires feature-specific defaults, flags, validation, config
   resolution, and runtime config hooks from `feature_config_ext.go`.
   `feature_metrics.go` owns the stable metrics contract and wires feature-specific
