@@ -9,14 +9,19 @@ import (
 )
 
 func NewDefaultSnapshotEngine() featurekit.SnapshotEngine[Snapshot] {
-	return defaultSnapshotEngine{}
+	engine, err := newSnapshotEngine(NewDefaultConfig())
+	if err != nil {
+		panic(err)
+	}
+	return engine
 }
 
 func NewSnapshotEngine(ctx featurekit.CollectorContext[Config]) (featurekit.SnapshotEngine[Snapshot], error) {
-	if _, _, _, err := ResolveFeatureConfig(ctx.FeatureName, ctx.Config); err != nil {
+	config, _, _, err := ResolveFeatureConfig(ctx.FeatureName, ctx.Config)
+	if err != nil {
 		return nil, err
 	}
-	return NewDefaultSnapshotEngine(), nil
+	return newSnapshotEngine(config)
 }
 
 func FeatureSnapshotStatus(snapshot Snapshot) framework.SnapshotStatus {
@@ -24,6 +29,10 @@ func FeatureSnapshotStatus(snapshot Snapshot) framework.SnapshotStatus {
 		AttemptTime: snapshot.AttemptTime,
 		Success:     snapshot.Success,
 	}
+}
+
+func newSnapshotEngine(_ Config) (featurekit.SnapshotEngine[Snapshot], error) {
+	return defaultSnapshotEngine{}, nil
 }
 
 type defaultSnapshotEngine struct{}
