@@ -33,7 +33,7 @@ release-archives: ## Cross-build release archives into dist/.
 		CGO_ENABLED=$(CGO_ENABLED) GOOS="$$goos" GOARCH="$$goarch" $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o "$$workdir/$$binary" $(MAIN_PACKAGE); \
 		cp README.md METRICS.md LICENSE "$$workdir/"; \
 		cp -R examples "$$workdir/examples"; \
-		tar -C $(DIST_DIR) -czf "$(DIST_DIR)/$$archive.tar.gz" "$$archive"; \
+		COPYFILE_DISABLE=1 tar -C $(DIST_DIR) -czf "$(DIST_DIR)/$$archive.tar.gz" "$$archive"; \
 		rm -rf "$$workdir"; \
 	done
 
@@ -60,7 +60,7 @@ release-smoke: release ## Build release archives and smoke-test the native archi
 	fi; \
 	tmp="$$(mktemp -d)"; \
 	trap 'rm -rf "$$tmp"' EXIT; \
-	tar -C "$$tmp" -xzf "$$archive"; \
+	COPYFILE_DISABLE=1 tar -C "$$tmp" -xzf "$$archive"; \
 	binary="$$tmp/$(PROJECT_NAME)_$(VERSION)_$${goos}_$${goarch}/$(PROJECT_NAME)"; \
 	if [ "$$goos" = "windows" ]; then binary="$$binary.exe"; fi; \
 	"$$binary" --help 2>&1 | grep -F "usage: $(PROJECT_NAME) [<flags>]" >/dev/null; \

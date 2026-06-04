@@ -73,6 +73,10 @@ func hasString(values []string, want string) bool {
 	return false
 }
 
+func metricName(featureName string, namespace string, id string) string {
+	return featurekit.FeatureMetricName(featureName, namespace, id, featureMetricSpecs)
+}
+
 func startTestCollector(t *testing.T, collector framework.StartableCollector) *prometheus.Registry {
 	t.Helper()
 

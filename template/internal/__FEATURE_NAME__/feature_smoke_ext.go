@@ -7,6 +7,6 @@ func FeatureSmoke(ctx featurekit.SmokeContext[Config]) featurekit.SmokeSpec {
 		ServerArgs: []string{
 			"--" + ctx.FeatureName + ".config-file=../examples/" + DefaultFeatureConfigFileName,
 		},
-		WantMetrics: []string{metricName(ctx.FeatureName, "", metricExampleValue) + " 1"},
+		WantMetrics: []string{featurekit.FeatureMetricName(ctx.FeatureName, "", metricExampleValue, featureMetricSpecs) + " 1"},
 	}
 }

@@ -12,7 +12,3 @@ var featureMetricSpecs = []featurekit.FeatureMetricSpec{
 		Help:  "Example __FEATURE_NAME__ metric emitted by the generated exporter skeleton",
 	},
 }
-
-func metricName(featureName string, namespace string, id string) string {
-	return featurekit.FeatureMetricName(featureName, namespace, id, featureMetricSpecs)
-}
