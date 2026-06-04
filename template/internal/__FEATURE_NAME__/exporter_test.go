@@ -124,6 +124,10 @@ func TestExporterSmokeSpecIncludesSkeletonMetric(t *testing.T) {
 	t.Parallel()
 
 	spec := newTestExporter().SmokeSpec()
+	wantConfig := "--" + testFeatureName + ".config-file=../examples/__PROJECT_NAME__.yml"
+	if !hasString(spec.ServerArgs, wantConfig) {
+		t.Fatalf("SmokeSpec().ServerArgs = %v, want %q", spec.ServerArgs, wantConfig)
+	}
 	want := metricName(testFeatureName, "", metricExampleValue) + " 1"
 	if !hasString(spec.WantMetrics, want) {
 		t.Fatalf("SmokeSpec().WantMetrics = %v, want %q", spec.WantMetrics, want)

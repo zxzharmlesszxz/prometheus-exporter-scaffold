@@ -9,7 +9,8 @@ It is built as a thin exporter on top of `prometheus-exporter-framework`.
 ```bash
 make build
 ./dist/__PROJECT_NAME__ \
-  --web.listen-address=:__DEFAULT_PORT__
+  --web.listen-address=:__DEFAULT_PORT__ \
+  --__FEATURE_NAME__.config-file=examples/__PROJECT_NAME__.yml
 ```
 
 Useful flags:
@@ -26,6 +27,7 @@ Useful flags:
 
 By default, the exporter listens on `:__DEFAULT_PORT__` and refreshes data every `1m`.
 If `/etc/prometheus/prometheus-__FEATURE_NAME__-exporter.yml` exists, it is loaded as the feature config file; if it is missing, defaults and flags are used.
+The generated `examples/__PROJECT_NAME__.yml` file is an empty but valid feature config for the skeleton exporter.
 Data refresh runs through the template snapshot collector in a background worker; scrapes return the last collected snapshot.
 
 ## Metrics

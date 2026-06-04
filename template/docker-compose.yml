@@ -8,6 +8,9 @@ services:
     command:
       - --web.listen-address=:${COMPOSE_EXPORTER_PORT:-9888}
       - --${FEATURE_NAME}.refresh-interval=30s
+    configs:
+      - source: feature_config
+        target: /etc/prometheus/prometheus-__FEATURE_NAME__-exporter.yml
     ports:
       - "${COMPOSE_EXPORTER_PORT:-9888}:${COMPOSE_EXPORTER_PORT:-9888}"
 
@@ -48,6 +51,8 @@ services:
         condition: service_started
 
 configs:
+  feature_config:
+    file: ./examples/__PROJECT_NAME__.yml
   prometheus_config:
     content: |
       global:

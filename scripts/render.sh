@@ -13,7 +13,7 @@ Usage:
     --namespace demo_exporter \
     --port 9888 \
     --docker-smoke-metric '$(FEATURE_NAME)_example_value 1' \
-    --docker-smoke-run-options '' \
+    --docker-smoke-run-options '-v "$(CURDIR)/examples/$(PROJECT_NAME).yml:/etc/prometheus/prometheus-$(FEATURE_NAME)-exporter.yml:ro"' \
     --docker-smoke-exporter-args '' \
     --docker-smoke-extra-metrics '' \
     --target-dir /tmp/prometheus-demo-exporter
@@ -46,7 +46,7 @@ feature_name=""
 metric_namespace=""
 default_port="9888"
 docker_smoke_metric='$(FEATURE_NAME)_example_value 1'
-docker_smoke_run_options=""
+docker_smoke_run_options='-v "$(CURDIR)/examples/$(PROJECT_NAME).yml:/etc/prometheus/prometheus-$(FEATURE_NAME)-exporter.yml:ro"'
 docker_smoke_exporter_args=""
 docker_smoke_extra_metrics=""
 target_dir=""
