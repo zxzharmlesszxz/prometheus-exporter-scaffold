@@ -56,13 +56,13 @@ Default managed files:
   .github/workflows/ci.yml
   .gitignore
   .gitlab-ci.yml
-  cmd/main.go
-  internal/exporter/exporter.go
-  internal/exporter/exporter_test.go
-  internal/__FEATURE_NAME__/feature.go
-  internal/__FEATURE_NAME__/feature_config_flags.go
-  internal/__FEATURE_NAME__/collector_test_helpers_test.go
-  smoke/binary_test.go
+  cmd/scaffold_main.go
+  internal/exporter/scaffold_exporter.go
+  internal/exporter/scaffold_exporter_test.go
+  internal/__FEATURE_NAME__/scaffold_feature.go
+  internal/__FEATURE_NAME__/scaffold_feature_config_flags.go
+  internal/__FEATURE_NAME__/scaffold_collector_test_helpers_test.go
+  smoke/scaffold_binary_test.go
 
 Framework version:
   Check mode compares the target exporter's go.mod
@@ -76,17 +76,19 @@ docker-compose.yml should stay scaffold-managed. Domain-specific Compose
 commands, mounts, configs, and local example wiring belong in
 docker-compose.override.yml.
 Dockerfiles can also be domain-specific when exporters need runtime packages.
+Generated Go files named scaffold_*.go are fully scaffold-owned. Do not edit
+them in concrete exporters; add feature behavior in adjacent non-scaffold files.
 Legacy exporters may still keep older scaffold-owned files under
 internal/exporter. Current scaffold shape keeps only a thin adapter in
-internal/exporter/exporter.go and moves reusable bootstrap/info behavior into
-the framework.
+internal/exporter/scaffold_exporter.go and moves reusable bootstrap/info behavior
+into the framework.
 Domain-specific metric constants, metric implementations, snapshots, snapshotters, and
 collector tests should live outside the adapter package, normally under
 internal/<feature-name>.
 The scaffold-owned feature lifecycle is split from domain behavior. The files
-internal/<feature-name>/feature.go,
-internal/<feature-name>/feature_config_flags.go, and
-internal/<feature-name>/collector_test_helpers_test.go define the stable
+internal/<feature-name>/scaffold_feature.go,
+internal/<feature-name>/scaffold_feature_config_flags.go, and
+internal/<feature-name>/scaffold_collector_test_helpers_test.go define the stable
 feature assembly and shared feature test helpers. These files should stay
 identical to the rendered scaffold; feature construction, config-file flag
 registration, feature config flag spec loading, runtime config, collector
@@ -100,7 +102,7 @@ Inspect domain-specific skeleton files with concrete rendered paths such as
 --file internal/domain/feature_metrics_ext.go; these files are intentionally not
 part of the default managed set.
 The stable exporter feature adapter is intentionally compact:
-`internal/exporter/exporter.go` only imports the domain package, creates the
+`internal/exporter/scaffold_exporter.go` only imports the domain package, creates the
 feature with framework-injected metadata, and delegates Main()/ExporterInfo()
 to the framework. Older split files such as `feature.go`, `defaults.go`,
 `info.go`, `standard_metrics.go`, and their tests are obsolete and are removed
@@ -138,6 +140,16 @@ default_files=(
   ".github/workflows/ci.yml"
   ".gitignore"
   ".gitlab-ci.yml"
+  "cmd/scaffold_main.go"
+  "internal/exporter/scaffold_exporter.go"
+  "internal/exporter/scaffold_exporter_test.go"
+  "internal/__FEATURE_NAME__/scaffold_feature.go"
+  "internal/__FEATURE_NAME__/scaffold_feature_config_flags.go"
+  "internal/__FEATURE_NAME__/scaffold_collector_test_helpers_test.go"
+  "smoke/scaffold_binary_test.go"
+)
+
+obsolete_files=(
   "cmd/main.go"
   "internal/exporter/exporter.go"
   "internal/exporter/exporter_test.go"
@@ -145,9 +157,6 @@ default_files=(
   "internal/__FEATURE_NAME__/feature_config_flags.go"
   "internal/__FEATURE_NAME__/collector_test_helpers_test.go"
   "smoke/binary_test.go"
-)
-
-obsolete_files=(
   "internal/__FEATURE_NAME__/feature_spec.go"
   "internal/__FEATURE_NAME__/feature_config.go"
   "internal/__FEATURE_NAME__/feature_metrics.go"

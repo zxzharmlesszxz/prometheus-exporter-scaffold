@@ -49,7 +49,7 @@ Run `make check` in this scaffold repository to render a demo exporter, check
 for unresolved placeholders, verify scaffold drift, and run generated Go-only
 checks.
 
-The generated `cmd/main.go` is intentionally stable. Project metadata is
+The generated `cmd/scaffold_main.go` is intentionally stable. Project metadata is
 injected by Makefile linker flags from `Makefile.mk`, while the concrete feature
 package owns domain behavior.
 
@@ -82,16 +82,17 @@ make drift-sync TARGET_DIR=../prometheus-demo-exporter
 ```
 
 The default managed set is intentionally conservative: CI files, ignore files,
-`cmd/main.go`, Dependabot config, `Makefile`, `Makefile.mk`, and the thin
-scaffold-owned adapter in `internal/exporter/exporter.go`. It also includes the
-thin feature assembly file, config flag loader wrapper, and shared feature test
-helpers under `internal/<feature-name>`. The stable feature contract itself
-lives in framework `featurekit`.
+`cmd/scaffold_main.go`, Dependabot config, `Makefile`, `Makefile.mk`, and the
+thin scaffold-owned adapter in `internal/exporter/scaffold_exporter.go`. It also
+includes the thin feature assembly file, config flag loader wrapper, shared
+feature test helpers, and binary smoke test under `scaffold_*.go` names. Those
+Go files are fully scaffold-owned and should not be edited in concrete
+exporters. The stable feature contract itself lives in framework `featurekit`.
 Concrete exporters keep domain logic in adjacent feature-package files, so
 inspect those files separately instead of blindly syncing them:
 
-`feature_config_flags.go` is scaffold-owned and delegates feature config flag
-registration to framework `featurekit`.
+`scaffold_feature_config_flags.go` is scaffold-owned and delegates feature
+config flag registration to framework `featurekit`.
 
 `feature_config_ext.go` owns the feature-specific `Config`, defaults, flag
 specs, config validation, config-file merge behavior, and runtime config entries
@@ -100,8 +101,8 @@ that are wired into the framework-owned feature contract.
 ```bash
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=Makefile
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=Dockerfile
-make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/exporter/exporter.go
-make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_config_flags.go
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/exporter/scaffold_exporter.go
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/scaffold_feature_config_flags.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/metrics.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/snapshot_types.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_config_ext.go
@@ -125,6 +126,9 @@ the check prints an `OUTDATED framework ...` line and exits non-zero.
 Older exporters may still have scaffold-owned bootstrap files under
 `internal/exporter`, such as `defaults.go`, `feature.go`, `info.go`,
 `standard_metrics.go`, and their tests. Current scaffold shape replaces that
-set with `internal/exporter/exporter.go`; project metadata, standard metric
-names, and binary smoke metadata are supplied by the framework through
-Makefile-injected linker variables.
+set with `internal/exporter/scaffold_exporter.go`; project metadata, standard
+metric names, and binary smoke metadata are supplied by the framework through
+Makefile-injected linker variables. During drift sync, old scaffold-owned names
+such as `cmd/main.go`, `internal/exporter/exporter.go`,
+`internal/<feature>/feature.go`, and `smoke/binary_test.go` are treated as
+obsolete in favor of their `scaffold_*.go` replacements.

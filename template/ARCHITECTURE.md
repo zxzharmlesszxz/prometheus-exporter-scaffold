@@ -5,26 +5,33 @@
 ## Package Layout
 
 - `cmd`
-  Minimal process entrypoint.
+  Minimal process entrypoint. The generated entrypoint file is
+  `scaffold_main.go` and should stay scaffold-owned.
 - `internal/exporter`
   Thin adapter that asks the feature package for a contract-backed feature and
-  delegates bootstrap metadata to the framework.
+  delegates bootstrap metadata to the framework. Files named `scaffold_*.go`
+  are fully scaffold-owned.
 - `internal/__FEATURE_NAME__`
-  Concrete feature package. `feature.go` owns the scaffold-compatible
+  Concrete feature package. `scaffold_feature.go` owns the scaffold-compatible
   `featurekit.SnapshotFeatureExtension` assembly and wires config-file flags,
   runtime config, collector construction, metrics, snapshot status, and smoke
   behavior through feature-specific hooks.
-  `feature_config_flags.go` owns the scaffold-managed wrapper that registers
-  feature config flag specs through framework `featurekit`.
+  `scaffold_feature_config_flags.go` owns the scaffold-managed wrapper that
+  registers feature config flag specs through framework `featurekit`.
   Feature-specific defaults and hook functions live in adjacent feature files:
   `feature_config_ext.go`, `feature_metrics_ext.go`,
   `feature_snapshotter_ext.go`, and `feature_smoke_ext.go`.
 - `smoke`
-  Binary smoke tests that build the real executable and verify CLI, HTTP, and metric behavior.
+  Binary smoke tests that build the real executable and verify CLI, HTTP, and
+  metric behavior. The scaffold-owned smoke test is `scaffold_binary_test.go`.
+
+Concrete exporter logic belongs in non-`scaffold_*.go` files. Treat
+`scaffold_*.go` files as generated contract glue and update them through the
+scaffold sync flow only.
 
 ## Data Flow
 
-1. `cmd/main.go` delegates to `internal/exporter.Main()`, which runs `framework.MainFromInjectedProject(...)`.
+1. `cmd/scaffold_main.go` delegates to `internal/exporter.Main()`, which runs `framework.MainFromInjectedProject(...)`.
 2. `internal/exporter` creates the concrete feature through
    `internal/__FEATURE_NAME__.NewFeature(...)` and framework-injected feature
    metadata.

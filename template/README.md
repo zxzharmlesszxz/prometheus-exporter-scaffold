@@ -102,6 +102,14 @@ make full-check
 
 `make go-check` runs Go-only checks. `make check` also validates the Prometheus and Docker Compose examples, so it requires Docker.
 
+## Scaffold-Owned Go Files
+
+Go files named `scaffold_*.go` are generated contract glue and should stay
+identical to the scaffold output. Add exporter-specific behavior in adjacent
+non-scaffold files such as `feature_config_ext.go`, `feature_metrics_ext.go`,
+`feature_snapshotter_ext.go`, `feature_smoke_ext.go`, `metrics.go`,
+`snapshot_types.go`, and the feature check package.
+
 Build local release artifacts:
 
 ```bash
