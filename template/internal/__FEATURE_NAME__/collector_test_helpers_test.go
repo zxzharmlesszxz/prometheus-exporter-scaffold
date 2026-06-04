@@ -114,6 +114,8 @@ func newTestCollectorWithNow(featureName string, namespace string, logger *slog.
 			StatusFunc:             FeatureSnapshotStatus,
 			Now:                    now,
 		},
-		MetricsFunc: NewFeatureMetricSet,
+		MetricsFunc: func(ctx featurekit.SnapshotMetricsContext[Snapshot]) featurekit.SnapshotMetrics[Snapshot] {
+			return featurekit.NewFeatureMetrics(ctx, featureMetricSpecs, NewFeatureMetricHandlers())
+		},
 	})
 }

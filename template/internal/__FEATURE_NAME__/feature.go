@@ -13,7 +13,8 @@ func NewFeature(options featurekit.SpecOptions) *featurekit.Feature[Config, Snap
 		RuntimeConfigFunc:      FeatureRuntimeConfigEntries,
 		NewSnapshotEngineFunc:  NewSnapshotEngine,
 		DefaultSnapshotEngine:  NewDefaultSnapshotEngine(),
-		MetricsFunc:            NewFeatureMetricSet,
+		MetricSpecs:            featureMetricSpecs,
+		MetricHandlers:         NewFeatureMetricHandlers(),
 		StatusFunc:             FeatureSnapshotStatus,
 		SmokeFunc:              FeatureSmoke,
 	})

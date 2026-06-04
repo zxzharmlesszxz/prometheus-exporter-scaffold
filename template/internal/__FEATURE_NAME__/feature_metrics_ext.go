@@ -8,35 +8,26 @@ import (
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/featurekit"
 )
 
-type ExampleMetrics struct {
-	featureName string
-	metrics     featurekit.FeatureMetricDescriptors
-}
-
-func NewFeatureMetricSet(ctx featurekit.SnapshotMetricsContext[Snapshot]) featurekit.SnapshotMetrics[Snapshot] {
-	return &ExampleMetrics{
-		featureName: ctx.FeatureName,
-		metrics:     featurekit.LoadFeatureMetricDescriptors(ctx.FeatureName, ctx.Namespace, featureMetricSpecs),
+func NewFeatureMetricHandlers() featurekit.FeatureMetricHandlers[Snapshot] {
+	return featurekit.FeatureMetricHandlers[Snapshot]{
+		Collect:  CollectFeatureMetrics,
+		LogError: LogFeatureSnapshotError,
 	}
 }
 
-func (m *ExampleMetrics) Describe(ch chan<- *prometheus.Desc) {
-	m.metrics.Describe(ch)
-}
-
-func (m *ExampleMetrics) Collect(ch chan<- prometheus.Metric, snapshot Snapshot, _ time.Time) {
+func CollectFeatureMetrics(ctx featurekit.FeatureMetricsContext[Snapshot], ch chan<- prometheus.Metric, snapshot Snapshot, _ time.Time) {
 	if !snapshot.Success {
 		return
 	}
 	ch <- prometheus.MustNewConstMetric(
-		m.metrics.Get(metricExampleValue),
+		ctx.Descriptors.Get(metricExampleValue),
 		prometheus.GaugeValue,
 		snapshot.Value,
 	)
 }
 
-func (m *ExampleMetrics) LogSnapshotError(logger *slog.Logger, snapshot Snapshot) {
+func LogFeatureSnapshotError(ctx featurekit.FeatureMetricsContext[Snapshot], logger *slog.Logger, snapshot Snapshot) {
 	if snapshot.Err != nil {
-		logger.Error(m.featureName+" data collection failed", "err", snapshot.Err)
+		logger.Error(ctx.FeatureName+" data collection failed", "err", snapshot.Err)
 	}
 }
