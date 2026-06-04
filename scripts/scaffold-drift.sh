@@ -29,12 +29,14 @@ Render metadata overrides:
   --feature-name NAME    Defaults to FEATURE_NAME from Makefile.mk or derived.
   --namespace NAME       Defaults to METRIC_NAMESPACE from Makefile.mk or derived.
   --port PORT            Defaults to DEFAULT_PORT from Makefile.mk or 9888.
+  --feature-config-file NAME
+                         Defaults to FEATURE_CONFIG_FILE from Makefile.mk or <project-name>.yml.
   --docker-smoke-metric TEXT
                          Defaults to DOCKER_SMOKE_METRIC from Makefile.mk or skeleton default.
   --docker-smoke-run-options TEXT
                          Extra options passed to `docker run` before the image.
   --docker-smoke-exporter-args TEXT
-                         Extra exporter arguments passed after the image.
+                         Defaults to DOCKER_SMOKE_EXPORTER_ARGS from Makefile.mk or the config-file arg.
   --docker-smoke-extra-metrics TEXT
                          Additional metric assertions separated by '|'.
 
@@ -116,6 +118,7 @@ project_desc=""
 feature_name=""
 metric_namespace=""
 default_port=""
+feature_config_file=""
 docker_smoke_metric=""
 docker_smoke_run_options=""
 docker_smoke_exporter_args=""
@@ -223,6 +226,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --port)
       default_port="${2:-}"
+      shift 2
+      ;;
+    --feature-config-file)
+      feature_config_file="${2:-}"
       shift 2
       ;;
     --docker-smoke-metric)
@@ -965,6 +972,12 @@ fi
 if [[ -z "$default_port" ]]; then
   default_port="9888"
 fi
+if [[ -z "$feature_config_file" ]]; then
+  feature_config_file="$(detect_makefile_mk_var "FEATURE_CONFIG_FILE")"
+fi
+if [[ -z "$feature_config_file" ]]; then
+  feature_config_file="${project_name}.yml"
+fi
 if [[ -z "$docker_smoke_metric" ]]; then
   docker_smoke_metric="$(detect_docker_smoke_metric)"
 fi
@@ -983,14 +996,16 @@ fi
 
 resolved_managed_files=()
 for file in "${managed_files[@]}"; do
-  resolved_managed_files+=("${file//__FEATURE_NAME__/$feature_name}")
+  file="${file//__FEATURE_NAME__/$feature_name}"
+  resolved_managed_files+=("${file//__FEATURE_CONFIG_FILE__/$feature_config_file}")
 done
 managed_files=("${resolved_managed_files[@]}")
 
 resolved_obsolete_files=()
 if [[ "${#managed_obsolete_files[@]}" -gt 0 ]]; then
   for file in "${managed_obsolete_files[@]}"; do
-    resolved_obsolete_files+=("${file//__FEATURE_NAME__/$feature_name}")
+    file="${file//__FEATURE_NAME__/$feature_name}"
+    resolved_obsolete_files+=("${file//__FEATURE_CONFIG_FILE__/$feature_config_file}")
   done
   managed_obsolete_files=("${resolved_obsolete_files[@]}")
 else
@@ -1007,6 +1022,7 @@ trap 'rm -rf "$rendered_dir"' EXIT
   --feature-name "$feature_name" \
   --namespace "$metric_namespace" \
   --port "$default_port" \
+  --feature-config-file "$feature_config_file" \
   --docker-smoke-metric "$docker_smoke_metric" \
   --docker-smoke-run-options "$docker_smoke_run_options" \
   --docker-smoke-exporter-args "$docker_smoke_exporter_args" \
@@ -1089,6 +1105,7 @@ printf '  description:  %s\n' "$project_desc"
 printf '  feature-name: %s\n' "$feature_name"
 printf '  namespace:    %s\n' "$metric_namespace"
 printf '  port:         %s\n' "$default_port"
+printf '  config-file:  %s\n' "$feature_config_file"
 printf '  framework:    %s (scaffold: %s)\n' "${target_framework_version:-<missing>}" "${current_framework_version:-<unknown>}"
 printf '  smoke-metric: %s\n' "$docker_smoke_metric"
 printf '  smoke-run-options: %s\n' "${docker_smoke_run_options:-<empty>}"

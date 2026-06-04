@@ -12,6 +12,8 @@ type Config struct {
 
 const DefaultRefreshInterval = time.Minute
 
+var DefaultFeatureConfigFileName = "__FEATURE_CONFIG_FILE__"
+
 type configFile struct{}
 
 var featureConfigFlagSpecs = []featurekit.FeatureConfigFlagSpec[Config]{}

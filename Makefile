@@ -7,6 +7,7 @@ PROJECT_DESC ?=
 FEATURE_NAME ?=
 METRIC_NAMESPACE ?=
 DEFAULT_PORT ?=
+FEATURE_CONFIG_FILE ?=
 TARGET_DIR ?= $(if $(PROJECT_NAME),rendered/$(PROJECT_NAME),)
 FILE ?=
 ALLOW_DIRTY ?= 0
@@ -19,6 +20,7 @@ CHECK_PROJECT_DESC ?= Prometheus Demo Exporter
 CHECK_FEATURE_NAME ?= demo
 CHECK_METRIC_NAMESPACE ?= demo_exporter
 CHECK_DEFAULT_PORT ?= 9888
+CHECK_FEATURE_CONFIG_FILE ?= $(CHECK_PROJECT_NAME).yml
 
 DRIFT_ALLOW_DIRTY := $(if $(filter 1 true yes,$(ALLOW_DIRTY)),--allow-dirty,)
 DRIFT_FILE_ARGS := $(foreach file,$(FILE),--file "$(file)")
@@ -53,6 +55,7 @@ render-check: scripts-check symbol-diff-check ## Render a demo exporter and run 
 		--feature-name "$(CHECK_FEATURE_NAME)" \
 		--namespace "$(CHECK_METRIC_NAMESPACE)" \
 		--port "$(CHECK_DEFAULT_PORT)" \
+		--feature-config-file "$(CHECK_FEATURE_CONFIG_FILE)" \
 		--target-dir "$$tmp"; \
 	if grep -R -n -E '__[A-Z0-9_]+__' "$$tmp"; then \
 		echo "rendered exporter still contains scaffold placeholders" >&2; \
@@ -73,6 +76,7 @@ new-exporter: require-project-name require-target-dir ## Render a new exporter. 
 		$(if $(FEATURE_NAME),--feature-name "$(FEATURE_NAME)",) \
 		$(if $(METRIC_NAMESPACE),--namespace "$(METRIC_NAMESPACE)",) \
 		$(if $(DEFAULT_PORT),--port "$(DEFAULT_PORT)",) \
+		$(if $(FEATURE_CONFIG_FILE),--feature-config-file "$(FEATURE_CONFIG_FILE)",) \
 		--target-dir "$(TARGET_DIR)"
 
 drift-check: require-target-dir ## Check scaffold-managed files. Set TARGET_DIR, optionally FILE, ALL_FILES=1, and SYMBOL_DIFF=1.
@@ -84,6 +88,7 @@ drift-check: require-target-dir ## Check scaffold-managed files. Set TARGET_DIR,
 		$(if $(FEATURE_NAME),--feature-name "$(FEATURE_NAME)",) \
 		$(if $(METRIC_NAMESPACE),--namespace "$(METRIC_NAMESPACE)",) \
 		$(if $(DEFAULT_PORT),--port "$(DEFAULT_PORT)",) \
+		$(if $(FEATURE_CONFIG_FILE),--feature-config-file "$(FEATURE_CONFIG_FILE)",) \
 		$(DRIFT_SYMBOL_DIFF) \
 		$(DRIFT_ALL_FILES) \
 		$(DRIFT_FILE_ARGS)
@@ -102,6 +107,7 @@ drift-sync: require-target-dir ## Sync scaffold-managed files into an existing e
 		$(if $(FEATURE_NAME),--feature-name "$(FEATURE_NAME)",) \
 		$(if $(METRIC_NAMESPACE),--namespace "$(METRIC_NAMESPACE)",) \
 		$(if $(DEFAULT_PORT),--port "$(DEFAULT_PORT)",) \
+		$(if $(FEATURE_CONFIG_FILE),--feature-config-file "$(FEATURE_CONFIG_FILE)",) \
 		$(DRIFT_FILE_ARGS)
 
 drift-list-files: ## List the default scaffold-managed files used by drift-check/drift-sync.

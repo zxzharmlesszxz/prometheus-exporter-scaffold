@@ -10,7 +10,7 @@ It is built as a thin exporter on top of `prometheus-exporter-framework`.
 make build
 ./dist/__PROJECT_NAME__ \
   --web.listen-address=:__DEFAULT_PORT__ \
-  --__FEATURE_NAME__.config-file=examples/__PROJECT_NAME__.yml
+  --__FEATURE_NAME__.config-file=examples/__FEATURE_CONFIG_FILE__
 ```
 
 Useful flags:
@@ -26,8 +26,10 @@ Useful flags:
 ```
 
 By default, the exporter listens on `:__DEFAULT_PORT__` and refreshes data every `1m`.
-If `/etc/prometheus/prometheus-__FEATURE_NAME__-exporter.yml` exists, it is loaded as the feature config file; if it is missing, defaults and flags are used.
-The generated `examples/__PROJECT_NAME__.yml` file is an empty but valid feature config for the skeleton exporter.
+If no `--__FEATURE_NAME__.config-file` value is provided, `/etc/prometheus/prometheus-__FEATURE_NAME__-exporter.yml` is loaded when it exists; if it is missing, defaults and flags are used.
+The generated `examples/__FEATURE_CONFIG_FILE__` file is an empty but valid feature config for the skeleton exporter.
+Make, Compose, and smoke defaults use `FEATURE_CONFIG_FILE`, which defaults to `__FEATURE_CONFIG_FILE__`, and pass that path explicitly with `--__FEATURE_NAME__.config-file=...`.
+Runtime config can always be overridden with another `--__FEATURE_NAME__.config-file=...` value.
 Data refresh runs through the framework snapshot collector in a background worker; scrapes return the last collected snapshot.
 
 ## Metrics

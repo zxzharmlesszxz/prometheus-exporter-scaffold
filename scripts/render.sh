@@ -12,8 +12,9 @@ Usage:
     --feature-name demo \
     --namespace demo_exporter \
     --port 9888 \
+    --feature-config-file prometheus-demo-exporter.yml \
     --docker-smoke-metric '$(FEATURE_NAME)_example_value 1' \
-    --docker-smoke-run-options '-v "$(CURDIR)/examples/$(PROJECT_NAME).yml:/etc/prometheus/prometheus-$(FEATURE_NAME)-exporter.yml:ro"' \
+    --docker-smoke-run-options '-v "$(CURDIR)/$(FEATURE_CONFIG_PATH):$(FEATURE_CONFIG_CONTAINER_PATH):ro"' \
     --docker-smoke-exporter-args '' \
     --docker-smoke-extra-metrics '' \
     --target-dir /tmp/prometheus-demo-exporter
@@ -28,12 +29,14 @@ Optional:
   --feature-name Defaults to project name without prometheus- prefix and -exporter suffix, with '-' replaced by '_'.
   --namespace   Defaults to <feature-name>_exporter.
   --port        Defaults to 9888.
+  --feature-config-file
+               Defaults to <project-name>.yml.
   --docker-smoke-metric
                Defaults to '$(FEATURE_NAME)_example_value 1'.
   --docker-smoke-run-options
                Extra options passed to `docker run` before the image.
   --docker-smoke-exporter-args
-               Extra exporter arguments passed after the image.
+               Defaults to '--$(FEATURE_NAME).config-file=$(FEATURE_CONFIG_CONTAINER_PATH)'.
   --docker-smoke-extra-metrics
                Additional metric assertions separated by '|'.
 USAGE
@@ -45,9 +48,10 @@ project_desc=""
 feature_name=""
 metric_namespace=""
 default_port="9888"
+feature_config_file=""
 docker_smoke_metric='$(FEATURE_NAME)_example_value 1'
-docker_smoke_run_options='-v "$(CURDIR)/examples/$(PROJECT_NAME).yml:/etc/prometheus/prometheus-$(FEATURE_NAME)-exporter.yml:ro"'
-docker_smoke_exporter_args=""
+docker_smoke_run_options='-v "$(CURDIR)/$(FEATURE_CONFIG_PATH):$(FEATURE_CONFIG_CONTAINER_PATH):ro"'
+docker_smoke_exporter_args='--$(FEATURE_NAME).config-file=$(FEATURE_CONFIG_CONTAINER_PATH)'
 docker_smoke_extra_metrics=""
 target_dir=""
 
@@ -75,6 +79,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --port)
       default_port="${2:-}"
+      shift 2
+      ;;
+    --feature-config-file)
+      feature_config_file="${2:-}"
       shift 2
       ;;
     --docker-smoke-metric)
@@ -122,6 +130,7 @@ if [[ -z "$feature_name" ]]; then
   feature_name="${stem//-/_}"
 fi
 metric_namespace="${metric_namespace:-${feature_name}_exporter}"
+feature_config_file="${feature_config_file:-${project_name}.yml}"
 
 if [[ ! "$feature_name" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
   echo "--feature-name must be a valid Go/Prometheus identifier fragment: $feature_name" >&2
@@ -158,6 +167,7 @@ export PROJECT_DESC="$project_desc"
 export FEATURE_NAME="$feature_name"
 export METRIC_NAMESPACE="$metric_namespace"
 export DEFAULT_PORT="$default_port"
+export FEATURE_CONFIG_FILE="$feature_config_file"
 export DOCKER_SMOKE_METRIC="$docker_smoke_metric"
 export DOCKER_SMOKE_RUN_OPTIONS="$docker_smoke_run_options"
 export DOCKER_SMOKE_EXPORTER_ARGS="$docker_smoke_exporter_args"
@@ -177,6 +187,7 @@ project_desc_sed="$(sed_replacement "$PROJECT_DESC")"
 feature_name_sed="$(sed_replacement "$FEATURE_NAME")"
 metric_namespace_sed="$(sed_replacement "$METRIC_NAMESPACE")"
 default_port_sed="$(sed_replacement "$DEFAULT_PORT")"
+feature_config_file_sed="$(sed_replacement "$FEATURE_CONFIG_FILE")"
 docker_smoke_metric_sed="$(sed_replacement "$DOCKER_SMOKE_METRIC")"
 docker_smoke_run_options_sed="$(sed_replacement "$DOCKER_SMOKE_RUN_OPTIONS")"
 docker_smoke_exporter_args_sed="$(sed_replacement "$DOCKER_SMOKE_EXPORTER_ARGS")"
@@ -190,6 +201,7 @@ find "$target_dir" -type f -print0 | while IFS= read -r -d '' file; do
     -e "s|__FEATURE_NAME__|$feature_name_sed|g" \
     -e "s|__METRIC_NAMESPACE__|$metric_namespace_sed|g" \
     -e "s|__DEFAULT_PORT__|$default_port_sed|g" \
+    -e "s|__FEATURE_CONFIG_FILE__|$feature_config_file_sed|g" \
     -e "s|__DOCKER_SMOKE_METRIC__|$docker_smoke_metric_sed|g" \
     -e "s|__DOCKER_SMOKE_RUN_OPTIONS__|$docker_smoke_run_options_sed|g" \
     -e "s|__DOCKER_SMOKE_EXPORTER_ARGS__|$docker_smoke_exporter_args_sed|g" \
@@ -200,6 +212,11 @@ done
 
 find "$target_dir" -depth -name '*__PROJECT_NAME__*' -print | while IFS= read -r path; do
   new_path="${path//__PROJECT_NAME__/$project_name}"
+  mv "$path" "$new_path"
+done
+
+find "$target_dir" -depth -name '*__FEATURE_CONFIG_FILE__*' -print | while IFS= read -r path; do
+  new_path="${path//__FEATURE_CONFIG_FILE__/$feature_config_file}"
   mv "$path" "$new_path"
 done
 
