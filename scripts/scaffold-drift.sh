@@ -199,6 +199,36 @@ obsolete_files=(
   "internal/__FEATURE_NAME__/spec.go"
 )
 
+companion_obsolete_files_for_managed_file() {
+  local file="$1"
+  case "$file" in
+    cmd/scaffold_main.go)
+      printf '%s\n' "cmd/main.go"
+      ;;
+    internal/exporter/scaffold_exporter.go)
+      printf '%s\n' "internal/exporter/exporter.go"
+      ;;
+    internal/exporter/scaffold_exporter_test.go)
+      printf '%s\n' "internal/exporter/exporter_test.go"
+      ;;
+    internal/*/scaffold_feature.go)
+      printf '%s\n' "${file%/scaffold_feature.go}/feature.go"
+      ;;
+    internal/*/scaffold_feature_config_flags.go)
+      printf '%s\n' "${file%/scaffold_feature_config_flags.go}/feature_config_flags.go"
+      ;;
+    internal/*/scaffold_snapshot_types.go)
+      printf '%s\n' "${file%/scaffold_snapshot_types.go}/snapshot_types.go"
+      ;;
+    internal/*/scaffold_collector_test_helpers_test.go)
+      printf '%s\n' "${file%/scaffold_collector_test_helpers_test.go}/collector_test_helpers_test.go"
+      ;;
+    smoke/scaffold_binary_test.go)
+      printf '%s\n' "smoke/binary_test.go"
+      ;;
+  esac
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --target-dir|--exporter-dir)
@@ -316,6 +346,12 @@ managed_obsolete_files=("${obsolete_files[@]}")
 if [[ "${#custom_files[@]}" -gt 0 ]]; then
   managed_files=("${custom_files[@]}")
   managed_obsolete_files=()
+  for file in "${custom_files[@]}"; do
+    while IFS= read -r obsolete_file; do
+      [[ -n "$obsolete_file" ]] || continue
+      managed_obsolete_files+=("$obsolete_file")
+    done < <(companion_obsolete_files_for_managed_file "$file")
+  done
 fi
 if [[ "$all_files" -eq 1 && "${#custom_files[@]}" -gt 0 ]]; then
   echo "--all-files cannot be combined with --file" >&2

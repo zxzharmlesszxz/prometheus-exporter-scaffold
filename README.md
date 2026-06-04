@@ -133,3 +133,5 @@ Makefile-injected linker variables. During drift sync, old scaffold-owned names
 such as `cmd/main.go`, `internal/exporter/exporter.go`,
 `internal/<feature>/feature.go`, and `smoke/binary_test.go` are treated as
 obsolete in favor of their `scaffold_*.go` replacements.
+When syncing one renamed file with `FILE=...`, the matching old filename is
+also removed; unrelated obsolete files are left untouched.
