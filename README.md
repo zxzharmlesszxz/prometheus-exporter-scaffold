@@ -84,12 +84,13 @@ make drift-sync TARGET_DIR=../prometheus-demo-exporter
 The default managed set is intentionally conservative: CI files, ignore files,
 `cmd/scaffold_main.go`, Dependabot config, `Makefile`, `Makefile.mk`, and the
 thin scaffold-owned adapter in `internal/exporter/scaffold_exporter.go`. It also
-includes the thin feature assembly file, config flag loader wrapper, shared
-feature test helpers, and binary smoke test under `scaffold_*.go` names. Those
-Go files are fully scaffold-owned and should not be edited in concrete
-exporters. The stable feature contract itself lives in framework `featurekit`.
-Concrete exporters keep domain logic in adjacent feature-package files, so
-inspect those files separately instead of blindly syncing them:
+includes the thin feature assembly file, config flag loader wrapper,
+feature-level Snapshot alias, shared feature test helpers, and binary smoke
+test under `scaffold_*.go` names. Those Go files are fully scaffold-owned and
+should not be edited in concrete exporters. The stable feature contract itself
+lives in framework `featurekit`. Concrete exporters keep domain logic in
+adjacent feature-package files and the feature check package, so inspect those
+files separately instead of blindly syncing them:
 
 `scaffold_feature_config_flags.go` is scaffold-owned and delegates feature
 config flag registration to framework `featurekit`.
@@ -103,8 +104,8 @@ make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=Makefile
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=Dockerfile
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/exporter/scaffold_exporter.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/scaffold_feature_config_flags.go
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/scaffold_snapshot_types.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/metrics.go
-make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/snapshot_types.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_config_ext.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_metrics_ext.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_snapshotter_ext.go

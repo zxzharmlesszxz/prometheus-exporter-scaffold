@@ -18,6 +18,8 @@
   behavior through feature-specific hooks.
   `scaffold_feature_config_flags.go` owns the scaffold-managed wrapper that
   registers feature config flag specs through framework `featurekit`.
+  `scaffold_snapshot_types.go` owns the scaffold-managed `Snapshot` alias from
+  the feature package to `internal/__FEATURE_NAME__check.Snapshot`.
   Feature-specific defaults and hook functions live in adjacent feature files:
   `feature_config_ext.go`, `feature_metrics_ext.go`,
   `feature_snapshotter_ext.go`, and `feature_smoke_ext.go`.
