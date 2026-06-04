@@ -24,7 +24,7 @@ func FeatureConfigFile(config *Config) *string {
 	return &config.ConfigFile
 }
 
-func ValidateFeatureConfig(Config) error {
+func ValidateFeatureConfig(_ Config) error {
 	return nil
 }
 

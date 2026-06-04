@@ -10,6 +10,8 @@ DEFAULT_PORT ?=
 TARGET_DIR ?= $(if $(PROJECT_NAME),rendered/$(PROJECT_NAME),)
 FILE ?=
 ALLOW_DIRTY ?= 0
+SYMBOL_DIFF ?= 0
+ALL_FILES ?= 0
 
 CHECK_PROJECT_NAME ?= prometheus-demo-exporter
 CHECK_GO_MODULE ?= github.com/zxzharmlesszxz/prometheus-demo-exporter
@@ -20,8 +22,10 @@ CHECK_DEFAULT_PORT ?= 9888
 
 DRIFT_ALLOW_DIRTY := $(if $(filter 1 true yes,$(ALLOW_DIRTY)),--allow-dirty,)
 DRIFT_FILE_ARGS := $(foreach file,$(FILE),--file "$(file)")
+DRIFT_SYMBOL_DIFF := $(if $(filter 1 true yes,$(SYMBOL_DIFF)),--symbol-diff,)
+DRIFT_ALL_FILES := $(if $(filter 1 true yes,$(ALL_FILES)),--all-files,)
 
-.PHONY: help scripts-check tools-check render-check check new-exporter drift-check drift-sync drift-list-files clean require-project-name require-target-dir
+.PHONY: help scripts-check tools-check symbol-diff-check render-check check new-exporter drift-check drift-check-all drift-sync drift-list-files clean require-project-name require-target-dir
 
 help: ## Show available make targets.
 	@printf "\033[33mUsage:\033[0m\n"
@@ -35,7 +39,10 @@ tools-check: ## Check local tools required by generated Go checks.
 	@command -v "$(GO)" >/dev/null 2>&1 || { echo "GO command not found: $(GO)" >&2; exit 127; }
 	@command -v "$(GOFMT)" >/dev/null 2>&1 || { echo "GOFMT command not found: $(GOFMT)" >&2; exit 127; }
 
-render-check: scripts-check tools-check ## Render a demo exporter and run its Go-only checks.
+symbol-diff-check: tools-check ## Check the Go symbol-level diff helper.
+	@$(GO) run ./scripts/go-symbol-diff.go -- template/internal/__FEATURE_NAME__/feature_snapshotter_ext.go template/internal/__FEATURE_NAME__/feature_snapshotter_ext.go >/dev/null
+
+render-check: scripts-check symbol-diff-check ## Render a demo exporter and run its Go-only checks.
 	@set -e; \
 	tmp="$$(mktemp -d)"; \
 	trap 'rm -rf "$$tmp"' EXIT; \
@@ -68,7 +75,7 @@ new-exporter: require-project-name require-target-dir ## Render a new exporter. 
 		$(if $(DEFAULT_PORT),--port "$(DEFAULT_PORT)",) \
 		--target-dir "$(TARGET_DIR)"
 
-drift-check: require-target-dir ## Check scaffold-managed files in an existing exporter. Set TARGET_DIR and optionally FILE.
+drift-check: require-target-dir ## Check scaffold-managed files. Set TARGET_DIR, optionally FILE, ALL_FILES=1, and SYMBOL_DIFF=1.
 	@scripts/scaffold-drift.sh \
 		--target-dir "$(TARGET_DIR)" \
 		$(if $(PROJECT_NAME),--project-name "$(PROJECT_NAME)",) \
@@ -77,7 +84,12 @@ drift-check: require-target-dir ## Check scaffold-managed files in an existing e
 		$(if $(FEATURE_NAME),--feature-name "$(FEATURE_NAME)",) \
 		$(if $(METRIC_NAMESPACE),--namespace "$(METRIC_NAMESPACE)",) \
 		$(if $(DEFAULT_PORT),--port "$(DEFAULT_PORT)",) \
+		$(DRIFT_SYMBOL_DIFF) \
+		$(DRIFT_ALL_FILES) \
 		$(DRIFT_FILE_ARGS)
+
+drift-check-all: require-target-dir ## Check every rendered scaffold file in an exporter. Set TARGET_DIR; use SYMBOL_DIFF=1 for Go symbol diffs.
+	@$(MAKE) --no-print-directory drift-check TARGET_DIR="$(TARGET_DIR)" ALL_FILES=1 SYMBOL_DIFF="$(SYMBOL_DIFF)" GO="$(GO)" GOFMT="$(GOFMT)"
 
 drift-sync: require-target-dir ## Sync scaffold-managed files into an existing exporter. Set TARGET_DIR; use ALLOW_DIRTY=1 to permit dirty managed files.
 	@scripts/scaffold-drift.sh \

@@ -9,8 +9,8 @@ Usage:
   scripts/scaffold-drift.sh --target-dir ../prometheus-demo-exporter --sync
 
 Checks or syncs scaffold-owned files in an existing exporter against the current
-template. By default the script only reports drift and exits non-zero when drift
-is found.
+template, or checks every rendered scaffold file with --all-files. By default
+the script only reports drift and exits non-zero when drift is found.
 
 Required:
   --target-dir DIR       Existing exporter repository to compare.
@@ -19,6 +19,8 @@ Modes:
   --check                Report drift only. This is the default.
   --sync                 Copy rendered scaffold-owned files into --target-dir.
   --allow-dirty          Allow --sync when managed files already have git changes.
+  --symbol-diff          For drifted Go files, print per-symbol differences for
+                         funcs, methods, types, vars, and consts.
 
 Render metadata overrides:
   --project-name NAME    Defaults to basename of --target-dir.
@@ -38,6 +40,8 @@ Render metadata overrides:
 
 File selection:
   --file PATH            Compare/sync this rendered path. Can be repeated.
+  --all-files            Check every file rendered by the scaffold. Check-only;
+                         refused with --sync to avoid overwriting feature code.
   --list-files           Print the default managed file list and exit.
 
 Default managed files:
@@ -117,6 +121,8 @@ docker_smoke_run_options=""
 docker_smoke_exporter_args=""
 docker_smoke_extra_metrics=""
 custom_files=()
+symbol_diff=0
+all_files=0
 framework_module="github.com/zxzharmlesszxz/prometheus-exporter-framework"
 
 default_files=(
@@ -239,6 +245,14 @@ while [[ $# -gt 0 ]]; do
       custom_files+=("${2:-}")
       shift 2
       ;;
+    --all-files|--all-rendered-files)
+      all_files=1
+      shift
+      ;;
+    --symbol-diff|--compare-symbols)
+      symbol_diff=1
+      shift
+      ;;
     --list-files)
       list_files=1
       shift
@@ -264,6 +278,10 @@ if [[ -z "$target_dir" ]]; then
   usage >&2
   exit 1
 fi
+if [[ "$all_files" -eq 1 && "$mode" == "sync" ]]; then
+  echo "--all-files is check-only; use repeated --file with --sync for intentional overwrites" >&2
+  exit 2
+fi
 if [[ ! -d "$target_dir" ]]; then
   echo "target dir does not exist: $target_dir" >&2
   exit 1
@@ -278,6 +296,10 @@ managed_obsolete_files=("${obsolete_files[@]}")
 if [[ "${#custom_files[@]}" -gt 0 ]]; then
   managed_files=("${custom_files[@]}")
   managed_obsolete_files=()
+fi
+if [[ "$all_files" -eq 1 && "${#custom_files[@]}" -gt 0 ]]; then
+  echo "--all-files cannot be combined with --file" >&2
+  exit 2
 fi
 
 detect_module() {
@@ -1008,6 +1030,38 @@ format_rendered_go() {
 
 format_rendered_go
 
+if [[ "$all_files" -eq 1 ]]; then
+  managed_files=()
+  while IFS= read -r file; do
+    managed_files+=("$file")
+  done < <(
+    cd "$rendered_dir"
+    find . -type f -print | sed 's#^\./##' | sort
+  )
+fi
+
+symbol_diff_go() {
+  local target_file="$1"
+  local rendered_file="$2"
+  local file="$3"
+  local go_bin="${GO:-go}"
+  if ! command -v "$go_bin" >/dev/null 2>&1; then
+    if [[ -x "$HOME/sdk/go1.26.3/bin/go" ]]; then
+      go_bin="$HOME/sdk/go1.26.3/bin/go"
+    else
+      return 1
+    fi
+  fi
+  (
+    cd "$repo_dir"
+    "$go_bin" run ./scripts/go-symbol-diff.go \
+    --left-label "target:$file" \
+    --right-label "scaffold:$file" \
+    "$target_file" \
+    "$rendered_file"
+  )
+}
+
 target_framework_version="$(detect_go_mod_required_version "$target_dir/go.mod" "$framework_module")"
 current_framework_version="$(detect_go_mod_required_version "$repo_dir/template/go.mod" "$framework_module")"
 framework_issue=""
@@ -1098,7 +1152,11 @@ for file in "${managed_files[@]}"; do
   fi
 
   echo "DRIFT   $file"
-  diff -u "$target_file" "$rendered_file" || true
+  if [[ "$symbol_diff" -eq 1 && "$file" == *.go ]]; then
+    symbol_diff_go "$target_file" "$rendered_file" "$file" || diff -u "$target_file" "$rendered_file" || true
+  else
+    diff -u "$target_file" "$rendered_file" || true
+  fi
   drift=1
 done
 

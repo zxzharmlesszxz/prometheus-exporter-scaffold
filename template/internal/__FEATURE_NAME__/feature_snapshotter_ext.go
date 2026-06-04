@@ -1,9 +1,7 @@
 package __FEATURE_NAME__
 
 import (
-	"context"
-	"time"
-
+	"__GO_MODULE__/internal/__FEATURE_NAME__check"
 	framework "github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter"
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/featurekit"
 )
@@ -32,15 +30,5 @@ func FeatureSnapshotStatus(snapshot Snapshot) framework.SnapshotStatus {
 }
 
 func newSnapshotEngine(_ Config) (featurekit.SnapshotEngine[Snapshot], error) {
-	return defaultSnapshotEngine{}, nil
-}
-
-type defaultSnapshotEngine struct{}
-
-func (e defaultSnapshotEngine) Snapshot(_ context.Context, now time.Time) Snapshot {
-	return Snapshot{
-		AttemptTime: now,
-		Success:     true,
-		Value:       1,
-	}
+	return __FEATURE_NAME__check.NewChecker(), nil
 }

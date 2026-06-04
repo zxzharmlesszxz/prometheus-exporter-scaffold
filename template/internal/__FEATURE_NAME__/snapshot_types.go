@@ -1,10 +1,5 @@
 package __FEATURE_NAME__
 
-import "time"
+import "__GO_MODULE__/internal/__FEATURE_NAME__check"
 
-type Snapshot struct {
-	AttemptTime time.Time
-	Success     bool
-	Value       float64
-	Err         error
-}
+type Snapshot = __FEATURE_NAME__check.Snapshot
