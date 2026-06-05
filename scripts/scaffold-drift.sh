@@ -60,7 +60,6 @@ Default managed files:
   internal/exporter/scaffold_exporter.go
   internal/exporter/scaffold_exporter_test.go
   internal/__FEATURE_NAME__/scaffold_feature.go
-  internal/__FEATURE_NAME__/scaffold_feature_config_flags.go
   internal/__FEATURE_NAME__/scaffold_snapshot_types.go
   internal/__FEATURE_NAME__/scaffold_collector_test_helpers_test.go
   smoke/scaffold_binary_test.go
@@ -88,7 +87,6 @@ collector tests should live outside the adapter package, normally under
 internal/<feature-name>.
 The scaffold-owned feature lifecycle is split from domain behavior. The files
 internal/<feature-name>/scaffold_feature.go,
-internal/<feature-name>/scaffold_feature_config_flags.go, and
 internal/<feature-name>/scaffold_snapshot_types.go, and
 internal/<feature-name>/scaffold_collector_test_helpers_test.go define the
 stable feature assembly, feature-level Snapshot alias, and shared feature test
@@ -146,7 +144,6 @@ default_files=(
   "internal/exporter/scaffold_exporter.go"
   "internal/exporter/scaffold_exporter_test.go"
   "internal/__FEATURE_NAME__/scaffold_feature.go"
-  "internal/__FEATURE_NAME__/scaffold_feature_config_flags.go"
   "internal/__FEATURE_NAME__/scaffold_snapshot_types.go"
   "internal/__FEATURE_NAME__/scaffold_collector_test_helpers_test.go"
   "smoke/scaffold_binary_test.go"
@@ -158,6 +155,7 @@ obsolete_files=(
   "internal/exporter/exporter_test.go"
   "internal/__FEATURE_NAME__/feature.go"
   "internal/__FEATURE_NAME__/feature_config_flags.go"
+  "internal/__FEATURE_NAME__/scaffold_feature_config_flags.go"
   "internal/__FEATURE_NAME__/snapshot_types.go"
   "internal/__FEATURE_NAME__/collector_test_helpers_test.go"
   "smoke/binary_test.go"
@@ -213,9 +211,6 @@ companion_obsolete_files_for_managed_file() {
       ;;
     internal/*/scaffold_feature.go)
       printf '%s\n' "${file%/scaffold_feature.go}/feature.go"
-      ;;
-    internal/*/scaffold_feature_config_flags.go)
-      printf '%s\n' "${file%/scaffold_feature_config_flags.go}/feature_config_flags.go"
       ;;
     internal/*/scaffold_snapshot_types.go)
       printf '%s\n' "${file%/scaffold_snapshot_types.go}/snapshot_types.go"

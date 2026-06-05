@@ -14,10 +14,8 @@
 - `internal/__FEATURE_NAME__`
   Concrete feature package. `scaffold_feature.go` owns the scaffold-compatible
   `featurekit.SnapshotFeatureExtension` assembly and wires config-file flags,
-  runtime config, collector construction, metrics, snapshot status, and smoke
-  behavior through feature-specific hooks.
-  `scaffold_feature_config_flags.go` owns the scaffold-managed wrapper that
-  registers feature config flag specs through framework `featurekit`.
+  feature config flag specs, runtime config, collector construction, metrics,
+  snapshot status, and smoke behavior through feature-specific hooks.
   `scaffold_snapshot_types.go` owns the scaffold-managed `Snapshot` alias from
   the feature package to `internal/__FEATURE_NAME__check.Snapshot`.
   Feature-specific defaults and hook functions live in adjacent feature files:

@@ -7,7 +7,7 @@ func NewFeature(options featurekit.SpecOptions) *featurekit.Feature[Config, Snap
 		DefaultRefreshInterval: DefaultRefreshInterval,
 		DefaultConfigFunc:      NewDefaultConfig,
 		ConfigFileFunc:         FeatureConfigFile,
-		RegisterFlagsFunc:      RegisterFeatureConfigFlags,
+		ConfigFlagSpecs:        featureConfigFlagSpecs,
 		ValidateConfigFunc:     ValidateFeatureConfig,
 		ResolveConfigFunc:      ResolveFeatureConfig,
 		RuntimeConfigFunc:      FeatureRuntimeConfigEntries,
