@@ -11,9 +11,38 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 )
 
-func TestCollectorExportsSnapshot(t *testing.T) {
-	t.Parallel()
+func TestFeatureContract(t *testing.T) {
+	suite := NewFeatureTestSuite(NewFeatureTestSpec())
+	RegisterFeatureTests(suite)
+	suite.RunTests(t)
+}
 
+func NewFeatureTestSpec() FeatureTestSpec {
+	return FeatureTestSpec{
+		SuccessfulSnapshot: func(at time.Time) Snapshot {
+			return Snapshot{
+				AttemptTime: at,
+				Success:     true,
+				Value:       1,
+			}
+		},
+		FailedSnapshot: func(at time.Time, err error) Snapshot {
+			return Snapshot{
+				AttemptTime: at,
+				Success:     false,
+				Err:         err,
+			}
+		},
+		CheckDefaultSnapshotter: true,
+	}
+}
+
+func RegisterFeatureTests(suite *FeatureTestSuite) {
+	suite.Register("collector_exports_snapshot", testCollectorExportsSnapshot)
+	suite.Register("smoke_spec_includes_skeleton_metric", testSmokeSpecIncludesSkeletonMetric)
+}
+
+func testCollectorExportsSnapshot(t *testing.T) {
 	now := time.Unix(1700000000, 0)
 	collector := newTestCollectorWithNow(testFeatureName, testMetricNamespace, slog.New(slog.NewTextHandler(io.Discard, nil)), newFakeSnapshotter(Snapshot{
 		AttemptTime: now,
@@ -43,5 +72,13 @@ func TestCollectorExportsSnapshot(t *testing.T) {
 		testLastSuccessfulTS,
 	); err != nil {
 		t.Fatalf("CollectAndCompare() error = %v", err)
+	}
+}
+
+func testSmokeSpecIncludesSkeletonMetric(t *testing.T) {
+	spec := newTestExporter().SmokeSpec()
+	want := metricName(testFeatureName, "", metricExampleValue) + " 1"
+	if !hasString(spec.WantMetrics, want) {
+		t.Fatalf("SmokeSpec().WantMetrics = %v, want %q", spec.WantMetrics, want)
 	}
 }

@@ -8,7 +8,7 @@ This repository owns generated-repository shape:
 - project layout
 - placeholder exporter feature
 - typed snapshot collector wiring
-- shared exporter test helper usage
+- shared feature test suite usage
 - example Prometheus, Grafana, and Docker Compose files
 - GitHub Actions and GitLab CI starter workflows
 - Dependabot starter configuration
@@ -85,8 +85,8 @@ The default managed set is intentionally conservative: CI files, ignore files,
 `cmd/scaffold_main.go`, Dependabot config, `Makefile`, `Makefile.mk`, and the
 thin scaffold-owned adapter in `internal/exporter/scaffold_exporter.go`. It also
 includes the thin feature assembly file, feature-level Snapshot alias, shared
-feature test helpers, and binary smoke test under `scaffold_*.go` names. Those
-Go files are fully scaffold-owned and should not be edited in concrete
+feature test suite core, and binary smoke test under `scaffold_*.go` names.
+Those Go files are fully scaffold-owned and should not be edited in concrete
 exporters. The stable feature contract itself lives in framework `featurekit`.
 Concrete exporters keep domain logic in adjacent feature-package files and the
 feature check package, so inspect those files separately instead of blindly
@@ -96,20 +96,24 @@ syncing them:
 specs, config validation, config-file merge behavior, and runtime config entries
 that are wired into the framework-owned feature contract.
 
+Feature contract tests should use `scaffold_feature_test_suite_test.go` for the
+standard suite runner and register exporter-specific checks from
+`feature_test_suite_ext_test.go`. Existing exporter test files can be migrated
+into that extension file instead of editing scaffold-owned test code.
+
 ```bash
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=Makefile
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=Dockerfile
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/exporter/scaffold_exporter.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/scaffold_feature.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/scaffold_snapshot_types.go
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/scaffold_feature_test_suite_test.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/metrics.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_config_ext.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_metrics_ext.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_snapshotter_ext.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_smoke_ext.go
-make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/collector_snapshot_test.go
-make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/collector_refresh_test.go
-make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/collector_defaults_test.go
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_test_suite_ext_test.go
 ```
 
 Use `ALLOW_DIRTY=1` with `make drift-sync` when you intentionally want to sync
