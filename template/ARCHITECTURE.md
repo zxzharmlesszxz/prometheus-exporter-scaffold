@@ -21,9 +21,10 @@
   Feature-specific defaults and hook functions live in adjacent feature files:
   `feature_config_ext.go`, `feature_metrics_ext.go`,
   `feature_snapshotter_ext.go`, and `feature_smoke_ext.go`.
-  `scaffold_feature_test_suite_test.go` owns the standard feature contract test
-  suite core. Register feature-specific test cases from
-  `feature_test_suite_ext_test.go` instead of editing scaffold-owned tests.
+  `scaffold_feature_test_suite_test.go` owns the thin scaffold bridge into
+  framework `exporter/exportertest/featuretest`. Register feature-specific
+  test cases from `feature_test_suite_ext_test.go` instead of editing
+  scaffold-owned tests.
 - `smoke`
   Binary smoke tests that build the real executable and verify CLI, HTTP, and
   metric behavior. The scaffold-owned smoke test is `scaffold_binary_test.go`.

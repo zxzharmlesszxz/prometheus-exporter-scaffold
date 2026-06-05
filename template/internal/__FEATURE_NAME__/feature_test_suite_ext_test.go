@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/exportertest/featuretest"
 )
 
 func TestFeatureContract(t *testing.T) {
@@ -38,13 +39,17 @@ func NewFeatureTestSpec() FeatureTestSpec {
 }
 
 func RegisterFeatureTests(suite *FeatureTestSuite) {
-	suite.Register("collector_exports_snapshot", testCollectorExportsSnapshot)
-	suite.Register("smoke_spec_includes_skeleton_metric", testSmokeSpecIncludesSkeletonMetric)
+	suite.Register("collector_exports_snapshot", func(t *testing.T) {
+		testCollectorExportsSnapshot(t, suite)
+	})
+	suite.Register("smoke_spec_includes_skeleton_metric", func(t *testing.T) {
+		testSmokeSpecIncludesSkeletonMetric(t, suite)
+	})
 }
 
-func testCollectorExportsSnapshot(t *testing.T) {
+func testCollectorExportsSnapshot(t *testing.T, suite *FeatureTestSuite) {
 	now := time.Unix(1700000000, 0)
-	collector := newTestCollectorWithNow(testFeatureName, testMetricNamespace, slog.New(slog.NewTextHandler(io.Discard, nil)), newFakeSnapshotter(Snapshot{
+	collector := suite.NewCollectorWithNow(testFeatureName, testMetricNamespace, slog.New(slog.NewTextHandler(io.Discard, nil)), suite.NewFakeSnapshotter(Snapshot{
 		AttemptTime: now,
 		Success:     true,
 		Value:       42,
@@ -63,10 +68,10 @@ func testCollectorExportsSnapshot(t *testing.T) {
 # HELP %[4]s Unix timestamp of the last successful %[5]s data collection
 # TYPE %[4]s gauge
 %[4]s 1.7e+09
-`, metricName(testFeatureName, "", metricExampleValue), testLastSuccess, testLastTimestamp, testLastSuccessfulTS, testFeatureName)
+`, suite.MetricName(testFeatureName, "", metricExampleValue), testLastSuccess, testLastTimestamp, testLastSuccessfulTS, testFeatureName)
 
 	if err := testutil.CollectAndCompare(collector, strings.NewReader(expected),
-		metricName(testFeatureName, "", metricExampleValue),
+		suite.MetricName(testFeatureName, "", metricExampleValue),
 		testLastSuccess,
 		testLastTimestamp,
 		testLastSuccessfulTS,
@@ -75,10 +80,10 @@ func testCollectorExportsSnapshot(t *testing.T) {
 	}
 }
 
-func testSmokeSpecIncludesSkeletonMetric(t *testing.T) {
-	spec := newTestExporter().SmokeSpec()
-	want := metricName(testFeatureName, "", metricExampleValue) + " 1"
-	if !hasString(spec.WantMetrics, want) {
+func testSmokeSpecIncludesSkeletonMetric(t *testing.T, suite *FeatureTestSuite) {
+	spec := suite.NewNamedFeature().SmokeSpec()
+	want := suite.MetricName(testFeatureName, "", metricExampleValue) + " 1"
+	if !featuretest.HasString(spec.WantMetrics, want) {
 		t.Fatalf("SmokeSpec().WantMetrics = %v, want %q", spec.WantMetrics, want)
 	}
 }

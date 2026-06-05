@@ -97,9 +97,10 @@ specs, config validation, config-file merge behavior, and runtime config entries
 that are wired into the framework-owned feature contract.
 
 Feature contract tests should use `scaffold_feature_test_suite_test.go` for the
-standard suite runner and register exporter-specific checks from
-`feature_test_suite_ext_test.go`. Existing exporter test files can be migrated
-into that extension file instead of editing scaffold-owned test code.
+thin scaffold bridge into framework `exporter/exportertest/featuretest` and
+register exporter-specific checks from `feature_test_suite_ext_test.go`.
+Existing exporter test files can be migrated into that extension file instead
+of editing scaffold-owned test code.
 
 ```bash
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=Makefile
