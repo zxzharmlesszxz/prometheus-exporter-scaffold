@@ -33,9 +33,15 @@ const (
 type FeatureTestFunc func(t *testing.T)
 
 type FeatureTestSpec struct {
-	SuccessfulSnapshot      func(time.Time) Snapshot
-	FailedSnapshot          func(time.Time, error) Snapshot
-	CheckDefaultSnapshotter bool
+	SuccessfulSnapshot                      func(time.Time) Snapshot
+	FailedSnapshot                          func(time.Time, error) Snapshot
+	ContractFlagArgs                        []string
+	ContractRuntimeConfig                   map[string]any
+	SkipContractLastCollectionSuccessMetric bool
+	CollectorFlagArgs                       []string
+	SkipRegisterCollectorsTest              bool
+	DefaultRuntimeConfig                    map[string]any
+	CheckDefaultSnapshotter                 bool
 }
 
 type FeatureTestSuite struct {
@@ -51,7 +57,9 @@ type featureTest struct {
 func NewFeatureTestSuite(spec FeatureTestSpec) *FeatureTestSuite {
 	suite := &FeatureTestSuite{spec: spec}
 	suite.Register("exporter_contract", suite.testExporterContract)
-	suite.Register("exporter_registers_collectors", suite.testExporterRegistersCollectors)
+	if !spec.SkipRegisterCollectorsTest {
+		suite.Register("exporter_registers_collectors", suite.testExporterRegistersCollectors)
+	}
 	suite.Register("contract_feature_defaults", suite.testContractFeatureDefaults)
 	suite.Register("feature_config_file_hook", suite.testFeatureConfigFileHook)
 	suite.Register("feature_config_file_loader", suite.testFeatureConfigFileLoader)
@@ -105,27 +113,48 @@ func (s *FeatureTestSuite) failedSnapshot(t *testing.T, at time.Time, err error)
 	return s.spec.FailedSnapshot(at, err)
 }
 
+func mergeRuntimeConfig(base map[string]any, overrides map[string]any) map[string]any {
+	merged := make(map[string]any, len(base)+len(overrides))
+	for key, value := range base {
+		merged[key] = value
+	}
+	for key, value := range overrides {
+		merged[key] = value
+	}
+	return merged
+}
+
 func (s *FeatureTestSuite) testExporterContract(t *testing.T) {
+	flagArgs := []string{
+		"--" + testFeatureName + ".refresh-interval=30s",
+	}
+	flagArgs = append(flagArgs, s.spec.ContractFlagArgs...)
+	wantRuntimeConfig := mergeRuntimeConfig(map[string]any{
+		"refresh_interval":   30 * time.Second,
+		"config_file":        featurekit.DefaultFeatureConfigFile(testFeatureName),
+		"config_file_loaded": false,
+	}, s.spec.ContractRuntimeConfig)
+	lastCollectionSuccessMetric := testLastSuccess
+	if s.spec.SkipContractLastCollectionSuccessMetric {
+		lastCollectionSuccessMetric = ""
+	}
+
 	exportertest.RunFeatureContract(t, exportertest.FeatureContractConfig{
 		NewFeature: func() exportertest.FeatureContractFeature {
 			return newTestExporter()
 		},
-		FeatureContext: testFeatureContext(),
-		FlagArgs: []string{
-			"--" + testFeatureName + ".refresh-interval=30s",
-		},
-		WantRuntimeConfig: map[string]any{
-			"refresh_interval":   30 * time.Second,
-			"config_file":        featurekit.DefaultFeatureConfigFile(testFeatureName),
-			"config_file_loaded": false,
-		},
+		FeatureContext:              testFeatureContext(),
+		FlagArgs:                    flagArgs,
+		WantRuntimeConfig:           wantRuntimeConfig,
 		DuplicateRegistration:       true,
-		LastCollectionSuccessMetric: testLastSuccess,
+		LastCollectionSuccessMetric: lastCollectionSuccessMetric,
 	})
 }
 
 func (s *FeatureTestSuite) testExporterRegistersCollectors(t *testing.T) {
-	registry := registerTestFeatureCollectors(t, newTestExporter())
+	exporter := newTestExporter()
+	parseExporterFlags(t, exporter, s.spec.CollectorFlagArgs)
+	registry := registerTestFeatureCollectors(t, exporter)
 	exportertest.WaitForMetricValue(t, registry, testLastSuccess, nil, 1)
 }
 
@@ -133,16 +162,12 @@ func (s *FeatureTestSuite) testContractFeatureDefaults(t *testing.T) {
 	exporter := newTestExporterWithOptions(featurekit.SpecOptions{})
 	parseExporterFlags(t, exporter, []string{})
 	config := exporter.RuntimeConfig()
-	if got := exportertest.RuntimeConfigValue(t, config, "refresh_interval"); got != DefaultRefreshInterval {
-		t.Fatalf("refresh_interval = %v, want %v", got, DefaultRefreshInterval)
-	}
-	wantConfigFile := featurekit.DefaultFeatureConfigFile("")
-	if got := exportertest.RuntimeConfigValue(t, config, "config_file"); got != wantConfigFile {
-		t.Fatalf("config_file = %q, want %q", got, wantConfigFile)
-	}
-	if got := exportertest.RuntimeConfigValue(t, config, "config_file_loaded"); got != false {
-		t.Fatalf("config_file_loaded = %v, want false", got)
-	}
+	wantRuntimeConfig := mergeRuntimeConfig(map[string]any{
+		"refresh_interval":   DefaultRefreshInterval,
+		"config_file":        featurekit.DefaultFeatureConfigFile(""),
+		"config_file_loaded": false,
+	}, s.spec.DefaultRuntimeConfig)
+	exportertest.AssertRuntimeConfigValues(t, config, wantRuntimeConfig)
 }
 
 func (s *FeatureTestSuite) testFeatureConfigFileHook(t *testing.T) {
