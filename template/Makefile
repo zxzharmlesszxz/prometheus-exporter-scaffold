@@ -232,4 +232,4 @@ clean: ## Remove generated local artifacts.
 	rm -f $(COVERAGE_PROFILE) $(COVERAGE_REPORT)
 
 size:
-	@du -h dist/$(PROJECT_NAME)
+	@du -h dist/$(PROJECT_NAME)*
