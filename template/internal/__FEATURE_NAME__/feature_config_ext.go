@@ -14,9 +14,9 @@ const DefaultRefreshInterval = time.Minute
 
 var DefaultFeatureConfigFileName = "__FEATURE_CONFIG_FILE__"
 
-type configFile struct{}
+type featureConfigFile struct{}
 
-var featureConfigFlagSpecs = []featurekit.FeatureConfigFlagSpec[Config]{}
+var featureConfigFlagSpecs []featurekit.FeatureConfigFlagSpec[Config]
 
 func NewDefaultConfig() Config {
 	return Config{}
@@ -35,7 +35,7 @@ func FeatureRuntimeConfigEntries(_ featurekit.RuntimeConfigContext[Config], _ Co
 }
 
 func ResolveFeatureConfig(featureName string, config Config) (Config, string, bool, error) {
-	var fileConfig configFile
-	configFile, loaded, err := featurekit.LoadFeatureConfigFile(featureName, config.ConfigFile, &fileConfig)
-	return config, configFile, loaded, err
+	var fileConfig featureConfigFile
+	cfgFile, loaded, err := featurekit.LoadFeatureConfigFile(featureName, config.ConfigFile, &fileConfig)
+	return config, cfgFile, loaded, err
 }

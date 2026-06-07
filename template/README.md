@@ -109,8 +109,10 @@ identical to the scaffold output. Add exporter-specific behavior in adjacent
 non-scaffold files such as `feature_config_ext.go`, `feature_metrics_ext.go`,
 `feature_snapshotter_ext.go`, `feature_smoke_ext.go`,
 `feature_test_suite_ext_test.go`, `metrics.go`, and the feature check package.
-The feature package `Snapshot` alias lives in `scaffold_snapshot_types.go`; the
-actual snapshot structure lives in `internal/__FEATURE_NAME__check`.
+The generated starter `Snapshot` alias lives in `snapshot_types.go`, and the
+starter snapshot structure lives in `internal/__FEATURE_NAME__check`; both are
+feature-owned after generation so concrete exporters can replace the alias with
+an aggregate snapshot and split domain checks into multiple packages.
 Standard feature tests run through framework `exporter/exportertest/featuretest`
 via `scaffold_feature_test_suite_test.go`; add feature-specific test cases by
 registering them in `feature_test_suite_ext_test.go`.

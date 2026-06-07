@@ -101,7 +101,7 @@ jobs:
 
     steps:
       - name: Prepare Alpine
-        run: apk add --no-cache bash ca-certificates docker-cli-compose git make
+        run: apk add --no-cache bash ca-certificates docker-cli-buildx docker-cli-compose git make
 
       - name: Checkout
         uses: actions/checkout@v6

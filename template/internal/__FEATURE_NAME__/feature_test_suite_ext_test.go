@@ -1,6 +1,7 @@
 package __FEATURE_NAME__
 
 import (
+	"__GO_MODULE__/internal/__FEATURE_NAME__check"
 	"fmt"
 	"io"
 	"log/slog"
@@ -22,16 +23,20 @@ func NewFeatureTestSpec() FeatureTestSpec {
 	return FeatureTestSpec{
 		SuccessfulSnapshot: func(at time.Time) Snapshot {
 			return Snapshot{
-				AttemptTime: at,
-				Success:     true,
-				Value:       1,
+				__FEATURE_NAME__: __FEATURE_NAME__check.Snapshot{
+					AttemptTime: at,
+					Success:     true,
+					Value:       1,
+				},
 			}
 		},
 		FailedSnapshot: func(at time.Time, err error) Snapshot {
 			return Snapshot{
-				AttemptTime: at,
-				Success:     false,
-				Err:         err,
+				__FEATURE_NAME__: __FEATURE_NAME__check.Snapshot{
+					AttemptTime: at,
+					Success:     false,
+					Err:         err,
+				},
 			}
 		},
 		CheckDefaultSnapshotter: true,
@@ -49,11 +54,20 @@ func RegisterFeatureTests(suite *FeatureTestSuite) {
 
 func testCollectorExportsSnapshot(t *testing.T, suite *FeatureTestSuite) {
 	now := time.Unix(1700000000, 0)
-	collector := suite.NewCollectorWithNow(testFeatureName, testMetricNamespace, slog.New(slog.NewTextHandler(io.Discard, nil)), suite.NewFakeSnapshotter(Snapshot{
-		AttemptTime: now,
-		Success:     true,
-		Value:       42,
-	}), testRefreshInterval, func() time.Time { return now })
+	collector := suite.NewCollectorWithNow(
+		testFeatureName,
+		testMetricNamespace,
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		suite.NewFakeSnapshotter(Snapshot{
+			__FEATURE_NAME__: __FEATURE_NAME__check.Snapshot{
+				AttemptTime: now,
+				Success:     true,
+				Value:       42,
+			},
+		}),
+		testRefreshInterval,
+		func() time.Time { return now },
+	)
 
 	expected := fmt.Sprintf(`
 # HELP %[1]s Example %[5]s metric emitted by the generated exporter skeleton

@@ -60,7 +60,6 @@ Default managed files:
   internal/exporter/scaffold_exporter.go
   internal/exporter/scaffold_exporter_test.go
   internal/__FEATURE_NAME__/scaffold_feature.go
-  internal/__FEATURE_NAME__/scaffold_snapshot_types.go
   internal/__FEATURE_NAME__/scaffold_feature_test_suite_test.go
   smoke/scaffold_binary_test.go
 
@@ -82,22 +81,24 @@ Legacy exporters may still keep older scaffold-owned files under
 internal/exporter. Current scaffold shape keeps only a thin adapter in
 internal/exporter/scaffold_exporter.go and moves reusable bootstrap/info behavior
 into the framework.
-Domain-specific metric constants, metric implementations, snapshots, snapshotters, and
-collector tests should live outside the adapter package, normally under
-internal/<feature-name>.
+Domain-specific metric constants, metric implementations, snapshots, snapshotters,
+check packages, and feature-specific tests should live outside the adapter
+package, normally under internal/<feature-name> and internal/<feature-name>check.
 The scaffold-owned feature lifecycle is split from domain behavior. The files
 internal/<feature-name>/scaffold_feature.go,
-internal/<feature-name>/scaffold_snapshot_types.go, and
 internal/<feature-name>/scaffold_feature_test_suite_test.go define the
-stable feature assembly, feature-level Snapshot alias, and shared feature test
-suite core. These files should stay identical to the rendered scaffold; feature
+stable feature assembly and shared feature test suite core. These files should
+stay identical to the rendered scaffold; feature
 construction, config-file flag registration, feature config flag spec loading,
 runtime config, collector construction, metrics wiring, snapshot status wiring,
 and smoke wiring belong to framework featurekit, while domain behavior belongs
 in feature config extension hooks for defaults, flags, validation, config
 resolution, and runtime config; feature metrics extension, feature snapshot
 engine extension, feature smoke extension, feature test suite extension, and
-check/lookup files.
+check/lookup files. Newly rendered exporters get starter snapshot/check files,
+but those are feature-owned after generation because real exporters may replace
+the simple Snapshot alias with an aggregate snapshot backed by multiple domain
+packages.
 Inspect domain-specific skeleton files with concrete rendered paths such as
 --file internal/demo/feature_config_ext.go or
 --file internal/domain/feature_metrics_ext.go; these files are intentionally not
@@ -145,7 +146,6 @@ default_files=(
   "internal/exporter/scaffold_exporter.go"
   "internal/exporter/scaffold_exporter_test.go"
   "internal/__FEATURE_NAME__/scaffold_feature.go"
-  "internal/__FEATURE_NAME__/scaffold_snapshot_types.go"
   "internal/__FEATURE_NAME__/scaffold_feature_test_suite_test.go"
   "smoke/scaffold_binary_test.go"
 )
@@ -157,7 +157,6 @@ obsolete_files=(
   "internal/__FEATURE_NAME__/feature.go"
   "internal/__FEATURE_NAME__/feature_config_flags.go"
   "internal/__FEATURE_NAME__/scaffold_feature_config_flags.go"
-  "internal/__FEATURE_NAME__/snapshot_types.go"
   "internal/__FEATURE_NAME__/collector_test_helpers_test.go"
   "internal/__FEATURE_NAME__/scaffold_collector_test_helpers_test.go"
   "smoke/binary_test.go"
@@ -213,9 +212,6 @@ companion_obsolete_files_for_managed_file() {
       ;;
     internal/*/scaffold_feature.go)
       printf '%s\n' "${file%/scaffold_feature.go}/feature.go"
-      ;;
-    internal/*/scaffold_snapshot_types.go)
-      printf '%s\n' "${file%/scaffold_snapshot_types.go}/snapshot_types.go"
       ;;
     internal/*/scaffold_feature_test_suite_test.go)
       printf '%s\n' "${file%/scaffold_feature_test_suite_test.go}/collector_test_helpers_test.go"

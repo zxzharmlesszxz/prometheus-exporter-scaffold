@@ -1,7 +1,7 @@
 include Makefile.mk
 
-.PHONY: help build release release-archives release-checksums release-smoke docker-build docker-buildx docker-buildx-push docker-push fmt fmt-check vet staticcheck test test-race coverage coverage-check smoke promtool-check compose compose-up compose-down compose-logs compose-config examples-check docker-smoke-build docker-smoke-image docker-smoke go-check check full-check clean
-.SILENT: compose compose-config compose-down compose-logs compose-up
+.PHONY: help build release release-archives release-checksums release-smoke docker-build docker-buildx docker-buildx-push docker-push fmt fmt-check vet staticcheck test test-race coverage coverage-check smoke promtool-check compose compose-up compose-down compose-logs compose-config examples-check docker-smoke-build docker-smoke-image docker-smoke go-check check full-check clean size
+.SILENT: compose compose-config compose-down compose-logs compose-up size
 
 help: ## Show available make targets.
 	@printf "\033[33mUsage:\033[0m\n"
@@ -16,6 +16,7 @@ fmt-check: ## Check Go formatting.
 build: ## Build the local release binary into dist/.
 	mkdir -p $(DIST_DIR)
 	CGO_ENABLED=$(CGO_ENABLED) $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(BUILD_OUTPUT) $(MAIN_PACKAGE)
+	$(MAKE) size
 
 release-archives: ## Cross-build release archives into dist/.
 	mkdir -p $(DIST_DIR)
@@ -224,8 +225,11 @@ go-check: fmt-check vet staticcheck coverage-check smoke test-race ## Run Go che
 
 check: go-check examples-check ## Run the standard maintenance check.
 
-full-check: check docker-smoke release-smoke ## Run all local checks, Docker smoke, and release smoke.
+full-check: check docker-smoke release-smoke size ## Run all local checks, Docker smoke, and release smoke.
 
 clean: ## Remove generated local artifacts.
 	rm -rf $(DIST_DIR)
 	rm -f $(COVERAGE_PROFILE) $(COVERAGE_REPORT)
+
+size:
+	@du -h dist/$(PROJECT_NAME)

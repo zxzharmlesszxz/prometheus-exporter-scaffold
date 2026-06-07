@@ -16,18 +16,21 @@ func NewFeatureMetricHandlers() featurekit.FeatureMetricHandlers[Snapshot] {
 }
 
 func CollectFeatureMetrics(ctx featurekit.FeatureMetricsContext[Snapshot], ch chan<- prometheus.Metric, snapshot Snapshot, _ time.Time) {
-	if !snapshot.Success {
+	if !snapshot.__FEATURE_NAME__.Success {
 		return
 	}
 	ch <- prometheus.MustNewConstMetric(
 		ctx.Descriptors.Get(metricExampleValue),
 		prometheus.GaugeValue,
-		snapshot.Value,
+		snapshot.__FEATURE_NAME__.Value,
 	)
 }
 
 func LogFeatureSnapshotError(ctx featurekit.FeatureMetricsContext[Snapshot], logger *slog.Logger, snapshot Snapshot) {
-	if snapshot.Err != nil {
-		logger.Error(ctx.FeatureName+" data collection failed", "err", snapshot.Err)
+	if snapshot.__FEATURE_NAME__.Err != nil {
+		logger.Error("data collection failed",
+			"feature", ctx.FeatureName,
+			"err", snapshot.__FEATURE_NAME__.Err,
+		)
 	}
 }

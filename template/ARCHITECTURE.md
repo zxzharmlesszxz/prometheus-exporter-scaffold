@@ -16,8 +16,9 @@
   `featurekit.SnapshotFeatureExtension` assembly and wires config-file flags,
   feature config flag specs, runtime config, collector construction, metrics,
   snapshot status, and smoke behavior through feature-specific hooks.
-  `scaffold_snapshot_types.go` owns the scaffold-managed `Snapshot` alias from
-  the feature package to `internal/__FEATURE_NAME__check.Snapshot`.
+  `snapshot_types.go` is a generated starter alias from the feature package to
+  `internal/__FEATURE_NAME__check.Snapshot`, but it is feature-owned after
+  generation so a concrete exporter can replace it with an aggregate snapshot.
   Feature-specific defaults and hook functions live in adjacent feature files:
   `feature_config_ext.go`, `feature_metrics_ext.go`,
   `feature_snapshotter_ext.go`, and `feature_smoke_ext.go`.
@@ -29,9 +30,9 @@
   Binary smoke tests that build the real executable and verify CLI, HTTP, and
   metric behavior. The scaffold-owned smoke test is `scaffold_binary_test.go`.
 
-Concrete exporter logic belongs in non-`scaffold_*.go` files. Treat
-`scaffold_*.go` files as generated contract glue and update them through the
-scaffold sync flow only.
+Concrete exporter logic belongs in non-`scaffold_*.go` files and domain check
+packages. Treat `scaffold_*.go` files as generated contract glue and update
+them through the scaffold sync flow only.
 
 ## Data Flow
 

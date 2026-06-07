@@ -152,14 +152,14 @@ func indent(value string) string {
 func printLineDiff(leftLabel string, left string, rightLabel string, right string) {
 	leftLines := strings.Split(strings.TrimRight(left, "\n"), "\n")
 	rightLines := strings.Split(strings.TrimRight(right, "\n"), "\n")
-	max := len(leftLines)
-	if len(rightLines) > max {
-		max = len(rightLines)
+	maximum := len(leftLines)
+	if len(rightLines) > maximum {
+		maximum = len(rightLines)
 	}
 
 	fmt.Printf("--- %s\n", leftLabel)
 	fmt.Printf("+++ %s\n", rightLabel)
-	for i := 0; i < max; i++ {
+	for i := 0; i < maximum; i++ {
 		var leftLine, rightLine string
 		leftOK := i < len(leftLines)
 		rightOK := i < len(rightLines)

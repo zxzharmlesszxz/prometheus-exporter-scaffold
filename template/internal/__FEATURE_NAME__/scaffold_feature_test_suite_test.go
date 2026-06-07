@@ -17,8 +17,6 @@ const (
 	testLastSuccessfulTS = testMetricNamespace + "_last_successful_collection_timestamp_seconds"
 )
 
-type FeatureTestFunc = featuretest.FeatureTestFunc
-
 type FeatureTestSpec = featuretest.FeatureTestSpec[Config, Snapshot]
 
 type FeatureTestSuite = featuretest.FeatureTestSuite[Config, Snapshot]
@@ -40,7 +38,7 @@ func NewFeatureTestSuite(spec FeatureTestSpec) *FeatureTestSuite {
 	}
 	if spec.NewConfigFileTarget == nil {
 		spec.NewConfigFileTarget = func() any {
-			return &configFile{}
+			return &featureConfigFile{}
 		}
 	}
 	if spec.MetricSpecs == nil {

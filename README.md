@@ -84,8 +84,8 @@ make drift-sync TARGET_DIR=../prometheus-demo-exporter
 The default managed set is intentionally conservative: CI files, ignore files,
 `cmd/scaffold_main.go`, Dependabot config, `Makefile`, `Makefile.mk`, and the
 thin scaffold-owned adapter in `internal/exporter/scaffold_exporter.go`. It also
-includes the thin feature assembly file, feature-level Snapshot alias, shared
-feature test suite core, and binary smoke test under `scaffold_*.go` names.
+includes the thin feature assembly file, shared feature test suite core, and
+binary smoke test under `scaffold_*.go` names.
 Those Go files are fully scaffold-owned and should not be edited in concrete
 exporters. The stable feature contract itself lives in framework `featurekit`.
 Concrete exporters keep domain logic in adjacent feature-package files and the
@@ -107,8 +107,8 @@ make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=Makefile
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=Dockerfile
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/exporter/scaffold_exporter.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/scaffold_feature.go
-make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/scaffold_snapshot_types.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/scaffold_feature_test_suite_test.go
+make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/snapshot_types.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/metrics.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_config_ext.go
 make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/feature_metrics_ext.go
@@ -120,6 +120,12 @@ make drift-check TARGET_DIR=../prometheus-demo-exporter FILE=internal/demo/featu
 Use `ALLOW_DIRTY=1` with `make drift-sync` when you intentionally want to sync
 over already modified managed files. `make drift-list-files` prints the default
 managed set.
+
+New exporters include starter domain files such as `internal/<feature>/snapshot_types.go`
+and `internal/<feature>check/*`. They are rendered by scaffold, but they are not
+scaffold-owned after generation: a real exporter may replace the simple
+`Snapshot` alias with an aggregate snapshot and may split the check package into
+multiple domain packages.
 
 `make drift-check` also compares the target exporter's
 `prometheus-exporter-framework` requirement in `go.mod` with the scaffold
