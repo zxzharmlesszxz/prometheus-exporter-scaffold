@@ -124,7 +124,7 @@ managed set.
 New exporters include starter domain files such as `internal/<feature>/snapshot_types.go`
 and `internal/<feature>check/*`. They are rendered by scaffold, but they are not
 scaffold-owned after generation: a real exporter may replace the simple
-`Snapshot` alias with an aggregate snapshot and may split the check package into
+`Snapshot` struct with an aggregate snapshot and may split the check package into
 multiple domain packages.
 
 `make drift-check` also compares the target exporter's

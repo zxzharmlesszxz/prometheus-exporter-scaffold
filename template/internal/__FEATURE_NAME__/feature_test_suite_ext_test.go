@@ -1,13 +1,14 @@
 package __FEATURE_NAME__
 
 import (
-	"__GO_MODULE__/internal/__FEATURE_NAME__check"
 	"fmt"
 	"io"
 	"log/slog"
 	"strings"
 	"testing"
 	"time"
+
+	"__GO_MODULE__/internal/__FEATURE_NAME__check"
 
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/exportertest/featuretest"

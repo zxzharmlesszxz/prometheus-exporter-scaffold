@@ -16,7 +16,7 @@
   `featurekit.SnapshotFeatureExtension` assembly and wires config-file flags,
   feature config flag specs, runtime config, collector construction, metrics,
   snapshot status, and smoke behavior through feature-specific hooks.
-  `snapshot_types.go` is a generated starter alias from the feature package to
+  `snapshot_types.go` is a generated starter struct wrapping
   `internal/__FEATURE_NAME__check.Snapshot`, but it is feature-owned after
   generation so a concrete exporter can replace it with an aggregate snapshot.
   Feature-specific defaults and hook functions live in adjacent feature files:
