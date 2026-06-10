@@ -6,21 +6,24 @@ WORKDIR /src
 
 ARG PROJECT_NAME
 ARG LDFLAGS
+ARG TARGETOS
+ARG TARGETARCH
 
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go build \
-  -trimpath \
-  -ldflags "${LDFLAGS}" \
-  -o "/out/${PROJECT_NAME}" \
-  ./cmd
+RUN make build \
+    GOOS=${TARGETOS} \
+    GOARCH=${TARGETARCH} \
+    ${LDFLAGS:+LDFLAGS="${LDFLAGS}"}
 
 FROM debian:bookworm-slim
 
 ARG PROJECT_NAME
 
-COPY --from=build /out/${PROJECT_NAME} /usr/local/bin/exporter
+COPY --from=build /src/dist/${PROJECT_NAME} /usr/local/bin/exporter
+
+USER nobody
 
 ENTRYPOINT ["/usr/local/bin/exporter"]

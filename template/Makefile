@@ -15,7 +15,7 @@ fmt-check: ## Check Go formatting.
 
 build: ## Build the local release binary into dist/.
 	mkdir -p $(DIST_DIR)
-	CGO_ENABLED=$(CGO_ENABLED) $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(BUILD_OUTPUT) $(MAIN_PACKAGE)
+	CGO_ENABLED=$(CGO_ENABLED) $(GO) build -buildvcs=false -trimpath -ldflags "$(LDFLAGS)" -o $(BUILD_OUTPUT) $(MAIN_PACKAGE)
 	$(MAKE) size
 
 release-archives: ## Cross-build release archives into dist/.
@@ -31,7 +31,7 @@ release-archives: ## Cross-build release archives into dist/.
 		rm -rf "$$workdir"; \
 		mkdir -p "$$workdir"; \
 		echo "building $$archive"; \
-		CGO_ENABLED=$(CGO_ENABLED) GOOS="$$goos" GOARCH="$$goarch" $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o "$$workdir/$$binary" $(MAIN_PACKAGE); \
+		CGO_ENABLED=$(CGO_ENABLED) GOOS="$$goos" GOARCH="$$goarch" $(GO) build -buildvcs=false -trimpath -ldflags "$(LDFLAGS)" -o "$$workdir/$$binary" $(MAIN_PACKAGE); \
 		cp README.md METRICS.md LICENSE "$$workdir/"; \
 		cp -R examples "$$workdir/examples"; \
 		COPYFILE_DISABLE=1 tar -C $(DIST_DIR) -czf "$(DIST_DIR)/$$archive.tar.gz" "$$archive"; \
@@ -74,13 +74,13 @@ staticcheck: ## Run staticcheck.
 	GOFLAGS="$(strip $(GOFLAGS) $(STATICCHECK_GOFLAGS))" $(STATICCHECK) ./...
 
 test: ## Run Go tests.
-	$(GO) test -ldflags "$(LDFLAGS)" ./...
+	$(GO) test -buildvcs=false -ldflags "$(LDFLAGS)" ./...
 
 test-race: ## Run Go tests with the race detector.
-	CGO_ENABLED=1 $(GO) test -race -ldflags "$(LDFLAGS)" ./...
+	CGO_ENABLED=1 $(GO) test -buildvcs=false -race -ldflags "$(LDFLAGS)" ./...
 
 coverage: ## Run tests with coverage and write coverage reports.
-	$(GO) test -ldflags "$(LDFLAGS)" -covermode=atomic -coverprofile=$(COVERAGE_PROFILE) ./...
+	$(GO) test -buildvcs=false -ldflags "$(LDFLAGS)" -covermode=atomic -coverprofile=$(COVERAGE_PROFILE) ./...
 	$(GO) tool cover -func=$(COVERAGE_PROFILE) | tee $(COVERAGE_REPORT)
 
 coverage-check: coverage ## Enforce the coverage threshold.
@@ -95,8 +95,8 @@ coverage-check: coverage ## Enforce the coverage threshold.
 
 smoke: ## Build and smoke-test the local binary.
 	mkdir -p $(DIST_DIR)
-	CGO_ENABLED=$(CGO_ENABLED) $(GO) build -trimpath -ldflags "$(SMOKE_LDFLAGS)" -o $(SMOKE_BINARY) $(MAIN_PACKAGE)
-	RUN_BINARY_SMOKE=1 GO="$(GO)" EXPORTER_SMOKE_BINARY="$(SMOKE_BINARY)" $(GO) test -ldflags "$(SMOKE_LDFLAGS)" ./smoke -run TestBinarySmoke -count=1
+	CGO_ENABLED=$(CGO_ENABLED) $(GO) build -buildvcs=false -trimpath -ldflags "$(SMOKE_LDFLAGS)" -o $(SMOKE_BINARY) $(MAIN_PACKAGE)
+	RUN_BINARY_SMOKE=1 GO="$(GO)" EXPORTER_SMOKE_BINARY="$(SMOKE_BINARY)" $(GO) test -buildvcs=false -ldflags "$(SMOKE_LDFLAGS)" ./smoke -run TestBinarySmoke -count=1
 
 docker-build: ## Build the Docker image.
 	$(DOCKER) build \
@@ -167,7 +167,7 @@ docker-smoke-image: ## Smoke-test an already built Docker image.
 	echo "$$version_output" | grep -F "$(DOCKER_SMOKE_EXPECTED_VERSION)" >/dev/null; \
 	echo "$$version_output" | grep -F "$(DOCKER_SMOKE_EXPECTED_BRANCH)" >/dev/null; \
 	echo "$$version_output" | grep -F "$(DOCKER_SMOKE_EXPECTED_REVISION)" >/dev/null
-	@cid="$$( $(DOCKER) run -d --rm $(DOCKER_SMOKE_RUN_OPTIONS) $(DOCKER_IMAGE) --log.level=error --web.listen-address=:9900 --$(FEATURE_NAME).refresh-interval=100ms $(DOCKER_SMOKE_EXPORTER_ARGS) )"; \
+	@cid="$$( $(DOCKER) run -d $(DOCKER_SMOKE_RUN_OPTIONS) $(DOCKER_IMAGE) --log.level=error --web.listen-address=:9900 --$(FEATURE_NAME).refresh-interval=100ms $(DOCKER_SMOKE_EXPORTER_ARGS) )"; \
 	trap "$(DOCKER) rm -f $$cid >/dev/null 2>&1 || true" EXIT; \
 	i=0; \
 	while [ "$$i" -lt 60 ]; do \

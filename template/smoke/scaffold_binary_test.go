@@ -4,8 +4,9 @@ import (
 	"os"
 	"testing"
 
-	"__GO_MODULE__/internal/exporter"
 	"github.com/zxzharmlesszxz/prometheus-exporter-framework/exporter/exportertest/smoketest"
+
+	"__GO_MODULE__/internal/exporter"
 )
 
 func TestBinarySmoke(t *testing.T) {
